@@ -1,0 +1,67 @@
+appId: com.houdunyun.ruyi
+productName: 后盾云桌面助手
+directories:
+  buildResources: build
+files:
+  # 仅打包编译产物；package.json 和生产依赖由 electron-builder 自动加入。
+  - 'out/**'
+extraResources:
+  - from: build/icon.png
+    to: icon.png
+  - from: build/macTrayTemplate.png
+    to: macTrayTemplate.png
+  - from: build/macTrayTemplate@2x.png
+    to: macTrayTemplate@2x.png
+asar: true
+asarUnpack:
+  - resources/**
+win:
+  executableName: houdunyun-ruyi
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  runAfterFinish: false
+  allowToChangeInstallationDirectory: true
+  unicode: true
+  artifactName: ${name}-${version}.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+mac:
+  category: public.app-category.utilities
+  minimumSystemVersion: '15.0'
+  artifactName: ${name}-${version}-${arch}.${ext}
+  target:
+    - target: dmg
+      arch:
+        - arm64
+    - target: zip
+      arch:
+        - arm64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSAppTransportSecurity:
+      NSAllowsLocalNetworking: true
+      NSAllowsArbitraryLoads: true
+  notarize: true
+dmg:
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
+linux:
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: houdunyun-ruyi
+  category: Utility
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: true
+publish:
+  provider: generic
+  url: https://www.houdunyun.com/api/core/upload/cdn/apps/houdunyun-ruyi

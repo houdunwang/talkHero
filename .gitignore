@@ -1,0 +1,30 @@
+node_modules
+dist
+.dist-removing-*
+out
+.DS_Store
+.eslintcache
+*.tsbuildinfo
+*.log*
+*.db
+routeTree.gen.ts
+.tanstack
+.electron
+apps/window-layout/native/macos/build/
+.envrc.local
+
+# Platform specific
+.DS_Store
+DS_Store
+# Frontend compiled assets
+# public/assets
+
+# resource
+tmp
+*.mp3
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+*.rar
+*.dist*

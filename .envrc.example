@@ -1,0 +1,13 @@
+export CSC_NAME="xiangjun ao (F7B54AYZ85)"
+
+# Choose one notarization method.
+
+# Method 1: Apple ID + app-specific password
+# export APPLE_ID="your-apple-id@example.com"
+# export APPLE_TEAM_ID="F7B54AYZ85"
+# export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+
+# Method 2: App Store Connect API key
+# export APPLE_API_KEY="/absolute/path/AuthKey_ABC1234567.p8"
+# export APPLE_API_KEY_ID="ABC1234567"
+# export APPLE_API_ISSUER="00000000-0000-0000-0000-000000000000"

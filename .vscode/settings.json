@@ -1,0 +1,29 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  //是否开启文件成组
+  "explorer.fileNesting.enabled": true,
+  //文件组是否默认展开
+  "explorer.fileNesting.expand": false,
+  //文件成组规则
+  "explorer.fileNesting.patterns": {
+    "electron-builder.yml": ".git*, .eslint*, .prettier*, .stylelint*, commitlint*, .editorconfig,LICENSE,pnpm*,.npm*,.env.example,.env.test,.env.production,ace.js,adonisrc.ts,README.md,*.json, *.config.js, *.config.ts,*.cjs,index.html,*.tsbuildinfo,*.yml,*.mjs,*.envrc,*.example,plan.md,PRD.md,AGENTS.md,CLAUDE.md"
+  },
+  "files.exclude": {
+    ".adonisjs": true,
+    ".tanstack": true,
+    "dist": true,
+    "public": true,
+    "storage": true,
+    "out": true,
+    "resources": true,
+    "appstore": true,
+  }
+}
