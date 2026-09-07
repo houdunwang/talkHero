@@ -3,7 +3,9 @@
 
 ## 项目概览
 
-后盾云桌面助手是 Electron 39、TypeScript、React 19、electron-vite、TanStack Router 与 Tailwind CSS 构成的桌面效率工具，使用 pnpm 11。主进程入口为 `src/main/index.ts`，renderer 入口为 `src/renderer/main.tsx`，共享装配在 `config/`，稳定功能边界在 `apps/`；编译输出为 `out/`，安装包输出为 `dist/`。支持 macOS 15+ Apple Silicon 和 Windows 11 x64。
+TalkHero 是基于后盾云桌面助手脚手架开发的本地 AI 视频对口型工具，由 Electron 39、TypeScript、React 19、electron-vite、TanStack Router 与 Tailwind CSS 构成，使用 pnpm 11。用户先从 B 视频创建可复用的本地音色档案，再以该音色和独立文案生成音频，最后只修改 A 视频人物的嘴部口型；产品还负责本地生成发布文案与封面，并在用户明确触发后自动操作抖音、小红书发布页面。产品行为以根目录 [PRD](PRD.md) 和已确认 Spec 为准。
+
+主进程入口为 `src/main/index.ts`，renderer 入口为 `src/renderer/main.tsx`，共享装配在 `config/`，稳定功能边界在 `apps/`；编译输出为 `out/`，安装包输出为 `dist/`。桌面壳支持 macOS 15+ Apple Silicon 和 Windows 11 x64；首版完整本地 AI 推理以 Windows 11 x64 + NVIDIA CUDA 为目标平台，其他平台能力不得在未经真实验证时宣称等价支持。
 
 ## 优先级与开发原则
 
@@ -15,9 +17,15 @@
 
 - `src/main/` 启动 Electron；`src/preload/` 与 `apps/*/preload/` 只暴露最小 bridge；`src/renderer/` 不得直接访问 Node 或系统能力。
 - `apps/<module>/` 是稳定功能边界，修改前先读其 README。`apps/core` 提供窗口、store、权限、网络、Tray 与更新等共享基础设施；业务规则和状态留在业务模块。
+- 对口型产品新增能力按四个模块收口：`apps/inference` 管理本地 Python Worker、模型、GPU 与任务调度；`apps/voice` 管理 B 视频预处理、音色档案和文案转音频；`apps/video` 管理 A 视频质检、人脸跟踪、局部口型生成与合成；`apps/publish` 管理标题、简介、话题、封面和平台发布自动化。不得把这些业务能力并入 `apps/core`，也不得把 ASR、FFmpeg、封面或单个平台过早拆成独立 app。
+- Electron 负责 UI、受控文件访问、任务编排与发布自动化，AI 模型必须运行在独立本地 Python Worker 中。renderer 不得直接启动进程、访问模型或执行 FFmpeg；main 只能通过有版本的结构化协议调用 Worker，并负责健康检查、超时、取消、崩溃恢复、资源释放和错误透传。
+- 首版默认模型为 IndexTTS 2.5（音色与语音）和 MuseTalk 1.5（口型），FFmpeg 负责音视频处理。模型实现必须位于 `apps/inference` 的适配边界之后，业务模块不得依赖模型仓库的内部文件布局；模型替换、量化或新增高清模式必须先由 Spec 定义行为、资源与许可证影响。
+- A 视频处理只允许重绘嘴部及实现自然融合所必需的最小邻域。人脸裁剪、对齐和低分辨率代理帧只能作为内部计算手段；输出不得未经用户明确选择而裁切、调色、美颜、换脸、补帧、修改背景、身体、动作或其他脸部特征。无法可靠跟踪、侧脸过大、遮挡或模糊时必须显式标记失败片段，不得扩大生成区域掩盖错误。
+- B 视频只用于首次创建或更新音色档案。音色档案至少封装经清理的参考音频、自动转写及模型所需特征；后续生成不得要求用户重复上传 B 视频。音色、参考生物特征和中间文件默认只保存在本机，删除与导出必须具有明确边界。
+- 发布自动化属于高风险外部写入：必须由用户对本次内容明确点击触发，使用独立受控浏览器资料目录与平台域名白名单，不得读取用户日常浏览器配置、绕过验证码或静默发布。只有平台页面给出可验证成功状态时才能报告发布成功；验证码、扫码、风控、页面变化与审核拒绝必须暂停或失败并保留可恢复的本地素材。
 - 新 main、preload、route、window、Tray 或菜单能力必须按需同步 `config/main.ts`、`config/preload.shared.ts`、`config/preload.ts`、`config/routes.ts`、`config/window.ts`、`config/tray.ts`、`config/menus.tsx`，不得只增加孤立实现。
 - IPC 必须经 preload；main 负责校验 sender、窗口、权限和参数。路径、URL、文件、持久化键、快捷键、显示器坐标、网络响应和 renderer 输入均不可信。
-- 认证、支付、授权码、更新、摄像头/麦克风/辅助功能、全局 Hook、原生 addon、PowerShell worker、文件写入与持久化是高风险边界。不得提交凭据、签名材料、授权码或个人数据。
+- 认证、支付、授权码、更新、摄像头/麦克风/辅助功能、全局 Hook、原生 addon、Python/PowerShell worker、模型下载、浏览器自动发布、文件写入与持久化是高风险边界。不得提交凭据、签名材料、授权码、登录资料、音色样本、人物视频或其他个人数据。
 - 原生、权限、多显示器/DPI、安装、签名与自动更新行为必须在实际受支持平台验证；Mock、类型检查或构建不能替代真实桌面证据。
 
 ## SDD、风险型 TDD 与 Git 模式
