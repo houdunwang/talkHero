@@ -7,22 +7,25 @@ const path = require('node:path')
 const platformSpecs = {
   mac: {
     label: 'macOS',
-    aliasName: 'houdunyun-ruyi-mac-arm64.dmg',
+    aliasName: 'houdunyun-talkHero-mac-arm64.dmg',
     requiredNames(version) {
-      return [`houdunyun-ruyi-${version}-mac-arm64.dmg`, `houdunyun-ruyi-${version}-arm64.zip`]
+      return [
+        `houdunyun-talkHero-${version}-mac-arm64.dmg`,
+        `houdunyun-talkHero-${version}-arm64.zip`
+      ]
     },
     sourceName(version) {
-      return `houdunyun-ruyi-${version}-mac-arm64.dmg`
+      return `houdunyun-talkHero-${version}-mac-arm64.dmg`
     }
   },
   win: {
     label: 'Windows',
-    aliasName: 'houdunyun-ruyi.exe',
+    aliasName: 'houdunyun-talkHero.exe',
     requiredNames(version) {
-      return [`houdunyun-ruyi-${version}.exe`]
+      return [`houdunyun-talkHero-${version}.exe`]
     },
     sourceName(version) {
-      return `houdunyun-ruyi-${version}.exe`
+      return `houdunyun-talkHero-${version}.exe`
     }
   }
 }

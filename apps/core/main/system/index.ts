@@ -16,7 +16,7 @@ if (!isFirstInstance) {
   app
     .whenReady()
     .then(async () => {
-      electronApp.setAppUserModelId('com.houdunyun.ruyi')
+      electronApp.setAppUserModelId('com.houdunyun.talkhero')
 
       app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window)

@@ -7,8 +7,8 @@ import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import type { EnvironmentSnapshot } from '../types/public'
 import { getManagedResourceStatuses } from './resource-service'
-import { taskRegistry } from './task-service'
 import { runWorkerTask } from './worker-runtime'
+import { resourceInstallService } from './resource-install-service'
 
 const execFileAsync = promisify(execFile)
 const detectNvidia = async (): Promise<{
@@ -95,13 +95,7 @@ export const getEnvironmentSnapshot = async (): Promise<EnvironmentSnapshot> => 
       running: workerRunning
     },
     resources,
-    tasks: taskRegistry.list().map(({ id, operation, state, stage, progress }) => ({
-      id,
-      operation,
-      state,
-      stage,
-      progress
-    })),
+    resourceInstall: resourceInstallService.getSnapshot(),
     message: targetPlatform
       ? computeMode === 'unsupported'
         ? '未通过受管 Worker 的 CUDA 握手，当前不能启动本地推理'

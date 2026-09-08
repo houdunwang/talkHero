@@ -8,14 +8,19 @@
 
 ## 关键入口与公共面
 
-| 路径                             | 职责                                                     |
-| -------------------------------- | -------------------------------------------------------- |
-| `main/contracts.ts`              | B 视频授权/质量与文案/分段规则                           |
-| `main/repository.ts`             | 派生音色文件和索引的原子创建、更新、重命名与引用保护     |
-| `main/service.ts`、`main/ipc.ts` | 音色 CRUD/试听、音频任务和仅限 `talkHero` 窗口的严格 IPC |
-| `types/`、`preload/index.ts`     | 音色库、选材、创建、合成与删除 bridge                    |
+| 路径                                 | 职责                                                    |
+| ------------------------------------ | ------------------------------------------------------- |
+| `main/contracts.ts`                  | B 视频授权/质量与文案/分段规则                          |
+| `main/repository.ts`                 | 派生音色文件和索引的原子创建、更新、重命名与引用保护    |
+| `main/service.ts`、`main/ipc.ts`     | 音色 CRUD/试听、音频任务和仅限 `setting` 窗口的严格 IPC |
+| `renderer/routes/config.tsx`         | 独立“视频音色”配置路由与 `SettingLayout` 装配           |
+| `renderer/routes/studio.tsx`         | 可复用的音色创建/更新与文案音频内容                     |
+| `renderer/current-script-session.ts` | 与发布页面共享的响应式当前文案及跨页操作锁              |
+| `types/`、`preload/index.ts`         | 音色库、选材、创建、合成与删除 bridge                   |
 
 IPC 不传音频 Buffer 或特征；完整文案仅作为生成请求进入 main，不写日志；renderer 不能指定源路径、输出路径或音色根目录。音色索引损坏时返回显式不可用状态，不把空列表伪装成读取成功。
+
+用户界面不定义独立窗口；`/voice/config` 以“视频音色”菜单独立承载创建和更新音色，`/video/workbench` 的“生成视频”菜单嵌入“音色库与文案音频”。两处都复用原系统 `setting` 窗口与 `SettingLayout`。页面状态由 voice renderer 维护，并在当前窗口生命周期内保留已选参考、音色选择、试听结果和进行中锁定；当前文案使用共享可订阅会话和跨页面计数锁，使生成与发布页面始终读取同一值，任一文案消费者运行时两处输入同时冻结。
 
 ## 验证与维护
 

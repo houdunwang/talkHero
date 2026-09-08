@@ -13,6 +13,14 @@ export type SelectedPublishVideo = {
   taskId: string
   displayName: string
   expiresAt: number
+  previewUrl: string
+}
+export type GeneratedVideoSummary = {
+  taskId: string
+  displayName: string
+  previewUrl: string | null
+  available: boolean
+  unavailableReason: string | null
 }
 export type PreparePublishRequest = { taskId: string; videoGrantId: string; script: string }
 export type UpdatePublishDraftRequest = {

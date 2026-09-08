@@ -17,6 +17,9 @@ const isTaskSnapshot = (value: unknown): value is TaskSnapshot => {
     (task.outputRelativePath === null ||
       (typeof task.outputRelativePath === 'string' &&
         /^outputs\/(audio|video)\/[0-9a-f-]{36}\.(wav|mp4)$/iu.test(task.outputRelativePath))) &&
+    (task.outputSha256 === null ||
+      (typeof task.outputSha256 === 'string' && /^[a-f0-9]{64}$/u.test(task.outputSha256))) &&
+    (task.outputRelativePath === null) === (task.outputSha256 === null) &&
     typeof task.state === 'string' &&
     [
       'queued',
@@ -75,6 +78,7 @@ export const initializeTaskRegistry = async (): Promise<void> => {
           id: randomUUID(),
           operation: 'task-journal.recovery',
           outputRelativePath: null,
+          outputSha256: null,
           state: 'failed',
           stage: 'task-journal-corrupt',
           progress: 0

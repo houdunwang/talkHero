@@ -4,6 +4,7 @@ import { PUBLISH_IPC } from '../types/ipc'
 import type { PublishCapabilitySnapshot } from '../types/public'
 import type {
   ConfirmPublishDraftRequest,
+  GeneratedVideoSummary,
   PreparePublishRequest,
   PublishDraft,
   SelectedPublishVideo,
@@ -18,6 +19,18 @@ export const publishPreload = {
   selectVideo: () =>
     ipcRenderer.invoke(PUBLISH_IPC.selectVideo) as Promise<
       TalkHeroResult<SelectedPublishVideo | null>
+    >,
+  listGeneratedVideos: () =>
+    ipcRenderer.invoke(PUBLISH_IPC.listGeneratedVideos) as Promise<
+      TalkHeroResult<GeneratedVideoSummary[]>
+    >,
+  selectGeneratedVideo: (taskId: string) =>
+    ipcRenderer.invoke(PUBLISH_IPC.selectGeneratedVideo, taskId) as Promise<
+      TalkHeroResult<SelectedPublishVideo>
+    >,
+  removeInvalidGeneratedVideo: (taskId: string) =>
+    ipcRenderer.invoke(PUBLISH_IPC.removeInvalidGeneratedVideo, taskId) as Promise<
+      TalkHeroResult<boolean>
     >,
   prepare: (input: PreparePublishRequest) =>
     ipcRenderer.invoke(PUBLISH_IPC.prepare, input) as Promise<TalkHeroResult<PublishDraft>>,

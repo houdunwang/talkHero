@@ -24,6 +24,23 @@ export const validatePlatformUrl = (platform: PublishPlatform, url: string): boo
   }
 }
 
+export const validateGeneratedVideoIdentity = (
+  task: {
+    id: string
+    operation: string
+    state: string
+    outputRelativePath: string | null
+    outputSha256: string | null
+  },
+  actualSha256: string
+): boolean =>
+  UUID.test(task.id) &&
+  task.operation === 'video.lipsync' &&
+  task.state === 'completed' &&
+  task.outputRelativePath === `outputs/video/${task.id}.mp4` &&
+  task.outputSha256 !== null &&
+  task.outputSha256 === actualSha256
+
 export const buildDraftFingerprint = (draft: {
   taskId: string
   videoSha256: string

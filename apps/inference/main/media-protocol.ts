@@ -22,6 +22,10 @@ export const parseTalkHeroMediaUrl = (
     const match = url.pathname.match(new RegExp(`^/(${UUID})/output\\.wav$`, 'iu'))
     return match ? { root: 'outputs', segments: ['audio', `${match[1]}.wav`] } : null
   }
+  if (url.hostname === 'video') {
+    const match = url.pathname.match(new RegExp(`^/(${UUID})/output\\.mp4$`, 'iu'))
+    return match ? { root: 'outputs', segments: ['video', `${match[1]}.mp4`] } : null
+  }
   return null
 }
 
@@ -38,7 +42,7 @@ export const registerTalkHeroMediaProtocol = async (): Promise<void> => {
       const relation = relative(root, file)
       if (isAbsolute(relation) || relation.startsWith('..') || relation === '')
         return new Response(null, { status: 403 })
-      return net.fetch(pathToFileURL(file).toString())
+      return net.fetch(pathToFileURL(file).toString(), { headers: request.headers })
     } catch {
       return new Response(null, { status: 404 })
     }

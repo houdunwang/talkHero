@@ -4,6 +4,7 @@ export type TaskSnapshot = {
   id: string
   operation: string
   outputRelativePath: string | null
+  outputSha256: string | null
   state: TaskState
   stage: string
   progress: number
@@ -43,6 +44,7 @@ export class TaskRegistry {
       id,
       operation,
       outputRelativePath: null,
+      outputSha256: null,
       state: 'queued',
       stage: 'waiting',
       progress: 0
@@ -59,6 +61,16 @@ export class TaskRegistry {
 
   list(): TaskSnapshot[] {
     return [...this.#tasks.values()].map((task) => ({ ...task }))
+  }
+
+  remove(id: string): boolean {
+    const current = this.#tasks.get(id)
+    if (!current) throw new Error('任务不存在')
+    if (!['cancelled', 'failed', 'completed'].includes(current.state))
+      throw new Error('任务尚未结束，不能移除')
+    const removed = this.#tasks.delete(id)
+    this.#notify()
+    return removed
   }
 
   replace(snapshots: TaskSnapshot[]): void {
@@ -111,15 +123,16 @@ export class TaskRegistry {
     return { ...next }
   }
 
-  attachOutput(id: string, relativePath: string): TaskSnapshot {
+  attachOutput(id: string, relativePath: string, sha256: string): TaskSnapshot {
     const current = this.#tasks.get(id)
     if (!current || current.state !== 'running') throw new Error('任务不在可记录输出状态')
     if (
       !/^outputs\/(audio|video)\/[0-9a-f-]{36}\.(wav|mp4)$/iu.test(relativePath) ||
-      relativePath.includes('..')
+      relativePath.includes('..') ||
+      !/^[a-f0-9]{64}$/u.test(sha256)
     )
       throw new Error('任务输出身份无效')
-    const next = { ...current, outputRelativePath: relativePath }
+    const next = { ...current, outputRelativePath: relativePath, outputSha256: sha256 }
     this.#tasks.set(id, next)
     this.#notify()
     return { ...next }

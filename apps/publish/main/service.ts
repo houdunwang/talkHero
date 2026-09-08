@@ -2,18 +2,22 @@ import { app } from 'electron'
 import { createHash, randomUUID } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { realpath, rename, rm, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { isAbsolute, join, relative } from 'node:path'
 import { fileGrants } from '@apps/inference/main/file-grants'
 import { runWorkerTask } from '@apps/inference/main/worker-runtime'
-import { taskRegistry } from '@apps/inference/main/task-service'
-import type { PublishCapabilitySnapshot } from '../types/public'
+import { persistTaskMutation, taskRegistry } from '@apps/inference/main/task-service'
+import type {
+  GeneratedVideoSummary,
+  PublishCapabilitySnapshot,
+  SelectedPublishVideo
+} from '../types/public'
 import type {
   ConfirmPublishDraftRequest,
   PreparePublishRequest,
   PublishDraft,
   UpdatePublishDraftRequest
 } from '../types/public'
-import { createCoverCandidates } from './contracts'
+import { createCoverCandidates, validateGeneratedVideoIdentity } from './contracts'
 import { PublishDraftRepository, type StoredPublishDraft } from './draft-repository'
 
 export const getPublishCapabilitySnapshot = (): PublishCapabilitySnapshot => ({
@@ -41,10 +45,77 @@ export const findGeneratedVideoTaskId = async (sourcePath: string): Promise<stri
       )
       if (expected === source) return task.id
     } catch {
-      // A missing historical output is not selectable for publishing.
+      console.warn('历史生成视频任务不可用', task.id)
     }
   }
   return null
+}
+
+const resolveGeneratedVideo = async (taskId: string): Promise<string> => {
+  const task = taskRegistry.get(taskId)
+  if (!task) throw new Error('生成视频任务不存在')
+  const root = await realpath(join(app.getPath('userData'), 'talkhero', 'outputs', 'video'))
+  const file = await realpath(join(root, `${taskId}.mp4`))
+  const relation = relative(root, file)
+  if (isAbsolute(relation) || relation.startsWith('..') || relation === '')
+    throw new Error('生成视频路径无效')
+  const actualSha256 = await sha256File(file)
+  if (!validateGeneratedVideoIdentity(task, actualSha256)) throw new Error('生成视频校验失败')
+  return file
+}
+
+export const listGeneratedVideos = async (): Promise<GeneratedVideoSummary[]> => {
+  const videos: GeneratedVideoSummary[] = []
+  for (const task of [...taskRegistry.list()].reverse()) {
+    if (task.state !== 'completed' || task.operation !== 'video.lipsync') continue
+    try {
+      await resolveGeneratedVideo(task.id)
+      videos.push({
+        taskId: task.id,
+        displayName: `生成视频 ${task.id.slice(0, 8)}`,
+        previewUrl: `talkhero-media://video/${task.id}/output.mp4`,
+        available: true,
+        unavailableReason: null
+      })
+    } catch {
+      console.warn('历史生成视频任务不可用', task.id)
+      videos.push({
+        taskId: task.id,
+        displayName: `生成视频 ${task.id.slice(0, 8)}`,
+        previewUrl: null,
+        available: false,
+        unavailableReason: '文件缺失或内容校验失败，请重新生成视频'
+      })
+    }
+  }
+  return videos
+}
+
+export const selectGeneratedVideo = async (
+  clientId: number,
+  taskId: string
+): Promise<SelectedPublishVideo> => {
+  const path = await resolveGeneratedVideo(taskId)
+  const grant = await fileGrants.issue(path, clientId, 'publish-video')
+  return {
+    grantId: grant.id,
+    taskId,
+    displayName: grant.displayName,
+    expiresAt: grant.expiresAt,
+    previewUrl: `talkhero-media://video/${taskId}/output.mp4`
+  }
+}
+
+export const removeInvalidGeneratedVideo = async (taskId: string): Promise<boolean> => {
+  const task = taskRegistry.get(taskId)
+  if (task?.state !== 'completed' || task.operation !== 'video.lipsync')
+    throw new Error('失效生成视频记录不存在')
+  try {
+    await resolveGeneratedVideo(taskId)
+  } catch {
+    return persistTaskMutation(() => taskRegistry.remove(taskId))
+  }
+  throw new Error('生成视频仍然可用，不能作为失效记录移除')
 }
 
 const sha256File = async (path: string): Promise<string> => {
@@ -106,6 +177,7 @@ export const preparePublishDraft = async (
   if ((await realpath(sourceVideo)) !== (await realpath(expectedVideo)))
     throw new Error('所选视频与生成任务不匹配')
   const videoSha256 = await sha256File(sourceVideo)
+  if (task.outputSha256 !== videoSha256) throw new Error('所选视频内容与生成记录不匹配')
   const draftId = randomUUID()
   const workerTaskId = randomUUID()
   const draftRoot = join(publishRoot(), draftId)

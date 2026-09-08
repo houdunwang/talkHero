@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   PROTOCOL_VERSION,
+  canAccessInferenceOperation,
   canTransitionTask,
   classifyComputeMode,
   parseWorkerMessage,
@@ -8,6 +9,14 @@ import {
 } from './contracts'
 
 describe('inference contracts', () => {
+  it('uses the original settings window as the only trusted business UI', () => {
+    expect(canAccessInferenceOperation('environment', 'setting')).toBe(true)
+    expect(canAccessInferenceOperation('tasks', 'setting')).toBe(true)
+    expect(canAccessInferenceOperation('cancelTask', 'setting')).toBe(true)
+    expect(canAccessInferenceOperation('environment', 'talkHero')).toBe(false)
+    expect(canAccessInferenceOperation('cancelTask', 'talkHero')).toBe(false)
+  })
+
   it('rejects malformed or incompatible worker messages', () => {
     expect(() => parseWorkerMessage({ version: '0', type: 'ready' })).toThrow('协议版本不匹配')
     expect(() =>

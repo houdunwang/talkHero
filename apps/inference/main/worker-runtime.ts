@@ -1,4 +1,6 @@
 import { app } from 'electron'
+import { createHash } from 'node:crypto'
+import { createReadStream } from 'node:fs'
 import { delimiter, join } from 'node:path'
 import { getManagedResourceStatuses } from './resource-service'
 import { flushTaskJournal, persistTaskMutation, taskRegistry } from './task-service'
@@ -8,6 +10,12 @@ import type { ManagedResourceName } from '../types/public'
 let client: WorkerClient | null = null
 
 const managedRoot = (): string => join(app.getPath('userData'), 'talkhero')
+
+const sha256File = async (path: string): Promise<string> => {
+  const hash = createHash('sha256')
+  for await (const chunk of createReadStream(path)) hash.update(chunk as Buffer)
+  return hash.digest('hex')
+}
 
 const workerScript = (): string =>
   app.isPackaged
@@ -105,11 +113,18 @@ export const runWorkerTask = async <T = Record<string, string>>(
     )
     const output = validateWorkerOutput(operation, rawOutput)
     const result = finalize ? await finalize(output) : (output as T)
+    const managedOutput =
+      operation === 'voice.synthesize'
+        ? `outputs/audio/${taskId}.wav`
+        : operation === 'video.lipsync'
+          ? `outputs/video/${taskId}.mp4`
+          : null
+    const outputSha256 = managedOutput
+      ? await sha256File(join(managedRoot(), ...managedOutput.split('/')))
+      : null
     await persistTaskMutation(() => {
-      if (operation === 'voice.synthesize')
-        taskRegistry.attachOutput(taskId, `outputs/audio/${taskId}.wav`)
-      if (operation === 'video.lipsync')
-        taskRegistry.attachOutput(taskId, `outputs/video/${taskId}.mp4`)
+      if (managedOutput && outputSha256)
+        taskRegistry.attachOutput(taskId, managedOutput, outputSha256)
       return taskRegistry.transition(taskId, 'completed', { stage: 'completed', progress: 100 })
     })
     return result

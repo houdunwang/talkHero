@@ -3,6 +3,13 @@ import { isAbsolute, relative, resolve } from 'node:path'
 // Inference 对外协议和状态转换的唯一纯逻辑边界。
 export const PROTOCOL_VERSION = '1.0' as const
 
+export type InferenceOperation = 'environment' | 'tasks' | 'cancelTask'
+
+export const canAccessInferenceOperation = (
+  _operation: InferenceOperation,
+  windowName: string
+): boolean => windowName === 'setting'
+
 export type TaskState =
   'queued' | 'running' | 'waiting-user' | 'cancelling' | 'cancelled' | 'failed' | 'completed'
 

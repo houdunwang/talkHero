@@ -9,7 +9,22 @@ export type TalkHeroResult<T> = { ok: true; data: T } | TalkHeroFailure
 
 export type ManagedResourceName =
   'python' | 'index-tts' | 'muse-talk' | 'asr' | 'ffmpeg' | 'browser'
-export type ManagedResourceStatus = { name: ManagedResourceName; installed: boolean }
+export type ManagedResourceStatus = {
+  name: ManagedResourceName
+  installed: boolean
+  version: string | null
+  sizeBytes: number
+  licenseName: string | null
+  licenseUrl: string | null
+  installable: boolean
+}
+export type ResourceInstallSnapshot = {
+  state: 'unavailable' | 'idle' | 'running' | 'completed' | 'failed' | 'cancelled'
+  currentResource: ManagedResourceName | null
+  completedBytes: number
+  totalBytes: number
+  message: string
+}
 export type TaskSummary = {
   id: string
   operation: string
@@ -25,6 +40,6 @@ export type EnvironmentSnapshot = {
   computeMode: ComputeMode
   worker: { installed: boolean; protocolVersion: string; running: boolean }
   resources: ManagedResourceStatus[]
-  tasks: TaskSummary[]
+  resourceInstall: ResourceInstallSnapshot
   message: string
 }

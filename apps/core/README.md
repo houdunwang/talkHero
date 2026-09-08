@@ -8,15 +8,15 @@ renderer 不得直接访问主进程实现；core preload 只能暴露最小系�
 
 ## 关键入口
 
-| 路径 | 职责 |
-|---|---|
-| `main/index.ts`、`main/system/index.ts` | 主进程启动与全局生命周期 |
-| `main/boot/index.ts` | 窗口和更新初始化 |
-| `main/window/` | 窗口创建、注册、定位与 IPC |
-| `main/store/` | `electron-store` 封装和 store IPC |
-| `main/request/`、`main/externalUrl.ts` | 网络与外部 URL 边界 |
-| `main/tray/`、`main/updater/` | Tray 聚合与自动更新 |
-| `preload/index.ts` | 暴露 `window.core` |
+| 路径                                    | 职责                              |
+| --------------------------------------- | --------------------------------- |
+| `main/index.ts`、`main/system/index.ts` | 主进程启动与全局生命周期          |
+| `main/boot/index.ts`                    | 窗口和更新初始化                  |
+| `main/window/`                          | 窗口创建、注册、定位与 IPC        |
+| `main/store/`                           | `electron-store` 封装和 store IPC |
+| `main/request/`、`main/externalUrl.ts`  | 网络与外部 URL 边界               |
+| `main/tray/`、`main/updater/`           | Tray 聚合与自动更新               |
+| `preload/index.ts`                      | 暴露 `window.core`                |
 
 ## 启动与装配
 
@@ -29,6 +29,8 @@ renderer 不得直接访问主进程实现；core preload 只能暴露最小系�
 - 窗口默认不随应用启动创建；只有显式设置 `createOnStartup: true` 的窗口由 `initWindow()` 创建，其余窗口仍须通过统一 `createWindow()` 按需创建。
 - 统一窗口创建器只透传业务窗口明确声明的 `webPreferences.backgroundThrottling`，并继续强制公共 preload、上下文隔离和禁用 Node 集成；隐藏的实时媒体宿主可据此申请不降速运行。
 - `main/dock/` 管理 Dock 与任务栏图标状态；macOS 没有可见窗口时，激活应用会打开 `config/dock.ts` 指定的窗口。
+- 原系统 `setting` 窗口和 `SettingLayout` 是统一软件界面；业务模块通过自身 renderer 路由接入 `config/menus.tsx`，但业务状态、IPC 与权限仍留在对应模块。该窗口负责首次启动和 Dock 激活；项目不再声明独立 `talkHero` 工作台窗口。
+- `renderer/route-session.ts` 保存同一窗口生命周期内的临时路由状态，避免菜单切换卸载页面时丢失仍在执行的工作流结果；具体状态实例仍由业务模块持有。
 - `main/store/` 提供 `CreateStore`、主进程 IPC 和 preload store bridge；`CreateStore.replaceAll` 用于以已校验完整对象精确替换持久化内容；核心设置 store 名为 `core`，桥接 channel 为 `config`。
 - `main/updater/` 提供官网分发使用的 `electron-updater`。
 - `main/request/` 是仅供主进程模块复用的受信网络边界，不向 renderer 注册通用 request IPC；401 默认收口到登录窗口，需要先完成原子业务清理的专用请求可显式关闭该跳转并自行处理。`main/externalUrl.ts`、`main/apps/helper.ts` 分别提供外链和本机应用路径边界。

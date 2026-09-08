@@ -33,32 +33,32 @@ function runAlias(platform, root) {
 test('macOS creates only the non-versioned DMG alias and preserves source artifacts', () => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  const dmgSource = path.join(dist, 'houdunyun-ruyi-2.1.27-mac-arm64.dmg')
-  const zipSource = path.join(dist, 'houdunyun-ruyi-2.1.27-arm64.zip')
+  const dmgSource = path.join(dist, 'houdunyun-talkHero-2.1.27-mac-arm64.dmg')
+  const zipSource = path.join(dist, 'houdunyun-talkHero-2.1.27-arm64.zip')
   writeFileSync(dmgSource, Buffer.from([0, 1, 2, 3, 255]))
   writeFileSync(zipSource, 'versioned zip')
 
   runAlias('mac', root)
 
   assert.deepEqual(
-    readFileSync(path.join(dist, 'houdunyun-ruyi-mac-arm64.dmg')),
+    readFileSync(path.join(dist, 'houdunyun-talkHero-mac-arm64.dmg')),
     readFileSync(dmgSource)
   )
   assert.equal(readFileSync(zipSource, 'utf8'), 'versioned zip')
-  assert.equal(existsSync(path.join(dist, 'houdunyun-ruyi-arm64.zip')), false)
-  assert.equal(existsSync(path.join(dist, 'houdunyun-ruyi.exe')), false)
+  assert.equal(existsSync(path.join(dist, 'houdunyun-talkHero-arm64.zip')), false)
+  assert.equal(existsSync(path.join(dist, 'houdunyun-talkHero.exe')), false)
 })
 
 test('Windows creates only the non-versioned NSIS alias and preserves the source', () => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  const source = path.join(dist, 'houdunyun-ruyi-2.1.27.exe')
+  const source = path.join(dist, 'houdunyun-talkHero-2.1.27.exe')
   writeFileSync(source, Buffer.from('new windows installer'))
 
   runAlias('win', root)
 
-  assert.deepEqual(readFileSync(path.join(dist, 'houdunyun-ruyi.exe')), readFileSync(source))
-  assert.equal(existsSync(path.join(dist, 'houdunyun-ruyi-mac-arm64.dmg')), false)
+  assert.deepEqual(readFileSync(path.join(dist, 'houdunyun-talkHero.exe')), readFileSync(source))
+  assert.equal(existsSync(path.join(dist, 'houdunyun-talkHero-mac-arm64.dmg')), false)
 })
 
 for (const fixture of [
@@ -71,7 +71,10 @@ for (const fixture of [
   test(`macOS ${fixture.name} source fails clearly without producing an alias`, () => {
     const root = createProject()
     if (fixture.content !== undefined) {
-      writeFileSync(path.join(root, 'dist', 'houdunyun-ruyi-2.1.27-mac-arm64.dmg'), fixture.content)
+      writeFileSync(
+        path.join(root, 'dist', 'houdunyun-talkHero-2.1.27-mac-arm64.dmg'),
+        fixture.content
+      )
     }
 
     const result = spawnSync(process.execPath, [aliasScript, 'mac', '--project-root', root], {
@@ -80,15 +83,15 @@ for (const fixture of [
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /macOS/)
-    assert.match(result.stderr, /houdunyun-ruyi-mac-arm64\.dmg/)
-    assert.equal(existsSync(path.join(root, 'dist', 'houdunyun-ruyi-mac-arm64.dmg')), false)
+    assert.match(result.stderr, /houdunyun-talkHero-mac-arm64\.dmg/)
+    assert.equal(existsSync(path.join(root, 'dist', 'houdunyun-talkHero-mac-arm64.dmg')), false)
   })
 }
 
 test('macOS requires the versioned ZIP but never creates a ZIP alias', () => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  writeFileSync(path.join(dist, 'houdunyun-ruyi-2.1.27-mac-arm64.dmg'), 'signed dmg')
+  writeFileSync(path.join(dist, 'houdunyun-talkHero-2.1.27-mac-arm64.dmg'), 'signed dmg')
 
   const result = spawnSync(process.execPath, [aliasScript, 'mac', '--project-root', root], {
     encoding: 'utf8'
@@ -96,17 +99,17 @@ test('macOS requires the versioned ZIP but never creates a ZIP alias', () => {
 
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /macOS/)
-  assert.match(result.stderr, /houdunyun-ruyi-mac-arm64\.dmg/)
-  assert.match(result.stderr, /houdunyun-ruyi-2\.1\.27-arm64\.zip/)
-  assert.equal(existsSync(path.join(dist, 'houdunyun-ruyi-mac-arm64.dmg')), false)
-  assert.equal(existsSync(path.join(dist, 'houdunyun-ruyi-arm64.zip')), false)
+  assert.match(result.stderr, /houdunyun-talkHero-mac-arm64\.dmg/)
+  assert.match(result.stderr, /houdunyun-talkHero-2\.1\.27-arm64\.zip/)
+  assert.equal(existsSync(path.join(dist, 'houdunyun-talkHero-mac-arm64.dmg')), false)
+  assert.equal(existsSync(path.join(dist, 'houdunyun-talkHero-arm64.zip')), false)
 })
 
 test('a repeated build replaces an old alias with the complete current artifact', () => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  const source = path.join(dist, 'houdunyun-ruyi-2.1.27.exe')
-  const alias = path.join(dist, 'houdunyun-ruyi.exe')
+  const source = path.join(dist, 'houdunyun-talkHero-2.1.27.exe')
+  const alias = path.join(dist, 'houdunyun-talkHero.exe')
   writeFileSync(source, Buffer.alloc(256 * 1024, 0xa5))
   writeFileSync(alias, 'old release')
 
@@ -118,8 +121,8 @@ test('a repeated build replaces an old alias with the complete current artifact'
 test('a rename failure removes the completed temporary copy', () => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  writeFileSync(path.join(dist, 'houdunyun-ruyi-2.1.27.exe'), 'windows installer')
-  mkdirSync(path.join(dist, 'houdunyun-ruyi.exe'))
+  writeFileSync(path.join(dist, 'houdunyun-talkHero-2.1.27.exe'), 'windows installer')
+  mkdirSync(path.join(dist, 'houdunyun-talkHero.exe'))
 
   const result = spawnSync(process.execPath, [aliasScript, 'win', '--project-root', root], {
     encoding: 'utf8'
@@ -128,7 +131,7 @@ test('a rename failure removes the completed temporary copy', () => {
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /Windows/)
   assert.deepEqual(
-    readdirSync(dist).filter((name) => name.startsWith('.houdunyun-ruyi.exe.')),
+    readdirSync(dist).filter((name) => name.startsWith('.houdunyun-talkHero.exe.')),
     []
   )
 })
@@ -136,7 +139,7 @@ test('a rename failure removes the completed temporary copy', () => {
 test('a temporary cleanup failure is included in the reported build error', async (t) => {
   const root = createProject()
   const dist = path.join(root, 'dist')
-  writeFileSync(path.join(dist, 'houdunyun-ruyi-2.1.27.exe'), 'windows installer')
+  writeFileSync(path.join(dist, 'houdunyun-talkHero-2.1.27.exe'), 'windows installer')
   t.mock.method(fileSystem, 'copyFile', async () => {
     const error = new Error('simulated copy failure')
     error.code = 'EIO'
@@ -150,7 +153,7 @@ test('a temporary cleanup failure is included in the reported build error', asyn
 
   await assert.rejects(
     createReleaseAlias('win', root),
-    /Windows -> houdunyun-ruyi\.exe.*simulated copy failure.*failed to remove temporary file.*EPERM/
+    /Windows -> houdunyun-talkHero\.exe.*simulated copy failure.*failed to remove temporary file.*EPERM/
   )
 })
 

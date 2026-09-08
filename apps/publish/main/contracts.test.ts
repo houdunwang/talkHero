@@ -6,6 +6,7 @@ import {
   parseConfirmPublishDraftRequest,
   parsePreparePublishRequest,
   parseUpdatePublishDraftRequest,
+  validateGeneratedVideoIdentity,
   validatePlatformUrl
 } from './contracts'
 
@@ -101,5 +102,34 @@ describe('publish contracts', () => {
     expect(() => parseConfirmPublishDraftRequest({ id: update.id, revision: 0 })).toThrow(
       '参数无效'
     )
+  })
+
+  it('accepts history only when the completed managed task and file fingerprint agree', () => {
+    const id = '123e4567-e89b-42d3-a456-426614174100'
+    const sha256 = 'a'.repeat(64)
+    expect(
+      validateGeneratedVideoIdentity(
+        {
+          id,
+          operation: 'video.lipsync',
+          state: 'completed',
+          outputRelativePath: `outputs/video/${id}.mp4`,
+          outputSha256: sha256
+        },
+        sha256
+      )
+    ).toBe(true)
+    expect(
+      validateGeneratedVideoIdentity(
+        {
+          id,
+          operation: 'video.lipsync',
+          state: 'completed',
+          outputRelativePath: `outputs/video/${id}.mp4`,
+          outputSha256: sha256
+        },
+        'b'.repeat(64)
+      )
+    ).toBe(false)
   })
 })

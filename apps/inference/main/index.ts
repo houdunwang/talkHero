@@ -3,21 +3,24 @@ import { app } from 'electron'
 import { stopWorker } from './worker-runtime'
 import { initializeTaskRegistry } from './task-service'
 import { registerTalkHeroMediaProtocol } from './media-protocol'
+import { resourceInstallService } from './resource-install-service'
 
 let initialization: Promise<void> | null = null
 
 export const initializeInference = (): Promise<void> => {
-  initialization ??= Promise.all([initializeTaskRegistry(), registerTalkHeroMediaProtocol()]).then(
-    async () => {
-      await import('./ipc')
-    }
-  )
+  initialization ??= Promise.all([
+    initializeTaskRegistry(),
+    registerTalkHeroMediaProtocol(),
+    resourceInstallService.initialize()
+  ]).then(async () => {
+    await import('./ipc')
+  })
   return initialization
 }
 
 app.once('before-quit', (event) => {
   event.preventDefault()
-  void stopWorker()
+  void Promise.all([stopWorker(), resourceInstallService.shutdown()])
     .catch(() => console.error('TalkHero shutdown cleanup failed'))
     .finally(() => app.quit())
 })

@@ -25,18 +25,33 @@ describe('verifyResourceManifest', () => {
         resource: 'python',
         version: '3.12.10',
         source: 'https://www.python.org/',
+        license: { name: 'PSF-2.0', url: 'https://docs.python.org/3/license.html' },
         files: [{ path: 'runtime.bin', sha256 }]
       })
     )
     const trust = {
       version: '3.12.10',
       source: 'https://www.python.org/',
+      licenseName: 'PSF-2.0',
+      licenseUrl: 'https://docs.python.org/3/license.html',
       files: { 'runtime.bin': sha256 }
     }
     expect(await verifyResourceManifest(root, 'python', trust)).toEqual({
       ok: true,
       version: '3.12.10'
     })
+    await writeFile(
+      join(root, 'manifest.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        resource: 'python',
+        version: '3.12.10',
+        source: 'https://www.python.org/',
+        license: { name: 'unknown', url: 'https://example.com/license' },
+        files: [{ path: 'runtime.bin', sha256 }]
+      })
+    )
+    expect((await verifyResourceManifest(root, 'python', trust)).ok).toBe(false)
     await writeFile(join(root, 'runtime.bin'), 'tampered')
     expect((await verifyResourceManifest(root, 'python', trust)).ok).toBe(false)
     expect(await verifyResourceManifest(root, 'python', undefined)).toEqual({

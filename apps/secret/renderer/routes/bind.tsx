@@ -14,9 +14,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ArrowUpRight, CheckCircle2, CircleAlert, KeyRound, ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { name as packageName } from '../../../../package.json'
+import { englishName as packageName } from '../../../../package.json'
 
-// 购买地址固定由官网前缀与 package.json.name 组成；软件名缺失或为空时不提供购买入口
+// 购买地址固定由官网前缀与 package.json.englishName 组成；软件名缺失或为空时不提供购买入口
 const purchaseUrl = (() => {
   const softName = packageName?.trim()
   if (!softName) return undefined

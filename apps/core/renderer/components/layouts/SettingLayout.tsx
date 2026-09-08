@@ -57,7 +57,7 @@ function HoudunyunDesc() {
         >
           <Button size={'xs'} variant={'outline'} className="rounded-sm py-3 ">
             <Sofa size={20} /> 后盾云
-            <span className="text-destructive">桌面助手</span>
+            <span className="text-destructive">短视频助手</span>
           </Button>
         </a>
       </div>

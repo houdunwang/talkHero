@@ -19,6 +19,7 @@ describe('TaskRegistry', () => {
         id: 'queued',
         operation: 'test.wait',
         outputRelativePath: null,
+        outputSha256: null,
         state: 'queued',
         stage: 'waiting',
         progress: 0
@@ -27,6 +28,7 @@ describe('TaskRegistry', () => {
         id: 'running',
         operation: 'video.lipsync',
         outputRelativePath: null,
+        outputSha256: null,
         state: 'running',
         stage: 'lip-sync',
         progress: 61
@@ -35,6 +37,7 @@ describe('TaskRegistry', () => {
         id: 'cancelling',
         operation: 'test.wait',
         outputRelativePath: null,
+        outputSha256: null,
         state: 'cancelling',
         stage: 'cancel',
         progress: 61
@@ -43,6 +46,7 @@ describe('TaskRegistry', () => {
         id: 'done',
         operation: 'voice.synthesize',
         outputRelativePath: 'outputs/audio/123e4567-e89b-42d3-a456-426614174000.wav',
+        outputSha256: 'b'.repeat(64),
         state: 'completed',
         stage: 'done',
         progress: 100
@@ -84,14 +88,15 @@ describe('TaskRegistry', () => {
     registry.transition(id, 'running', { stage: 'render', progress: 1 })
     ;(
       registry as unknown as {
-        attachOutput: (id: string, relativePath: string) => void
+        attachOutput: (id: string, relativePath: string, sha256: string) => void
       }
-    ).attachOutput(id, `outputs/video/${id}.mp4`)
+    ).attachOutput(id, `outputs/video/${id}.mp4`, 'a'.repeat(64))
     registry.transition(id, 'completed', { stage: 'completed', progress: 100 })
 
     expect(registry.get(id)).toMatchObject({
       operation: 'video.lipsync',
-      outputRelativePath: `outputs/video/${id}.mp4`
+      outputRelativePath: `outputs/video/${id}.mp4`,
+      outputSha256: 'a'.repeat(64)
     })
   })
 
@@ -101,5 +106,15 @@ describe('TaskRegistry', () => {
     registry.create('job-persist', 'test.complete')
     registry.transition('job-persist', 'running', { stage: 'run', progress: 1 })
     expect(changes).toEqual([['queued'], ['running']])
+  })
+
+  it('only removes terminal task records', () => {
+    const registry = new TaskRegistry()
+    registry.create('remove-terminal', 'video.lipsync')
+    expect(() => registry.remove('remove-terminal')).toThrow('任务尚未结束')
+    registry.transition('remove-terminal', 'running', { stage: 'working', progress: 10 })
+    registry.transition('remove-terminal', 'failed', { stage: 'failed', progress: 10 })
+    expect(registry.remove('remove-terminal')).toBe(true)
+    expect(registry.get('remove-terminal')).toBeUndefined()
   })
 })

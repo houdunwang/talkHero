@@ -54,7 +54,7 @@ function RouteComponent(): React.JSX.Element {
     }
   }, [])
 
-  const softwareTitle = soft?.title || '后盾云桌面助手'
+  const softwareTitle = soft?.title || '后盾云短视频助手'
   const isFreeSoft = soft?.free === true
   const isActiveSoft = soft?.canUse === true
 

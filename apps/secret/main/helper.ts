@@ -1,6 +1,6 @@
 import { getMachineCode } from '@apps/core/main/device'
 import { sendRequest } from '@apps/core/main/request'
-import { name as packageName } from '../../../package.json'
+import { englishName as packageName } from '../../../package.json'
 import { clearLicenseSecret, getLicenseSecret, setLicenseSecret } from './store'
 
 export type BindLicenseResult = {

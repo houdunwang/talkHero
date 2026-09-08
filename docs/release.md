@@ -1,19 +1,20 @@
 <!-- managed-by: hd-sdd-tdd-setup -->
+
 # 发布与回滚
 
 项目使用 `electron-builder` 分发 macOS 与 Windows 桌面安装包，并通过官网 generic provider 提供自动更新。未通过本地交付门禁的版本不得发布；认证、支付、权限、持久化、安装、签名和自动更新等高风险发布必须人工确认。本文不授权构建、签名、公证、上传或发布。
 
 ## 当前方式
 
-| 项目 | 状态 | 配置或命令 | 说明 |
-|---|---|---|---|
-| macOS 15+ Apple Silicon | 已具备 | `pnpm build:web:mac` | 生成安装与更新产物；签名、公证需人工核对 |
-| Windows 11 x64 | 已具备 | `pnpm build:web:win` | 生成 Windows 安装与更新产物 |
-| macOS 发布检查 | 已具备 | `pnpm check:web:mac` | 检查公证/签名相关结果 |
-| 自动更新 | 已具备 | `electron-builder.yml`、`dev-app-update.yml` | generic provider，发布前核对更新 URL 与清单 |
-| CI/CD | 不使用 | 无 | 本项目采用纯本地发布流程 |
-| 崩溃/发布监控 | 待建设 | 无仓库证据 | 目前依赖日志与人工反馈 |
-| 直接版本回滚 | 部分具备 | 恢复已验证发布物或发布修复版本 | 已安装客户端不能假定自动降级 |
+| 项目                    | 状态     | 配置或命令                                   | 说明                                        |
+| ----------------------- | -------- | -------------------------------------------- | ------------------------------------------- |
+| macOS 15+ Apple Silicon | 已具备   | `pnpm build:web:mac`                         | 生成安装与更新产物；签名、公证需人工核对    |
+| Windows 11 x64          | 已具备   | `pnpm build:web:win`                         | 生成 Windows 安装与更新产物                 |
+| macOS 发布检查          | 已具备   | `pnpm check:web:mac`                         | 检查公证/签名相关结果                       |
+| 自动更新                | 已具备   | `electron-builder.yml`、`dev-app-update.yml` | generic provider，发布前核对更新 URL 与清单 |
+| CI/CD                   | 不使用   | 无                                           | 本项目采用纯本地发布流程                    |
+| 崩溃/发布监控           | 待建设   | 无仓库证据                                   | 目前依赖日志与人工反馈                      |
+| 直接版本回滚            | 部分具备 | 恢复已验证发布物或发布修复版本               | 已安装客户端不能假定自动降级                |
 
 低风险文档或样式可简化检查；普通功能和状态变化必须完成 Spec 验收、相关测试和真实运行；认证、支付、数据、权限、签名、自动更新与不可逆变化必须有独立审查、恢复方案和人工发布确认。
 
@@ -26,7 +27,9 @@
 5. 从发布渠道安装或更新，验证启动、核心流程、认证/订阅、受影响持久化、权限、退出和再次启动。
 6. 记录版本、日期、渠道、命令结果、真实运行、剩余风险、发布结果与恢复位置。
 
-electron-builder 的版本化文件和更新清单必须保持一致。`dist/` 中的官网下载别名为 macOS `houdunyun-ruyi-mac-arm64.dmg` 与 Windows `houdunyun-ruyi.exe`；固定别名不属于自动更新清单，不得替换、重命名或删除版本化发布物。macOS ZIP 不生成固定别名。
+electron-builder 的版本化文件和更新清单必须保持一致。`dist/` 中的官网下载别名为 macOS `houdunyun-talkHero-mac-arm64.dmg` 与 Windows `houdunyun-talkHero.exe`；固定别名不属于自动更新清单，不得替换、重命名或删除版本化发布物。macOS ZIP 不生成固定别名。
+
+品牌标识切换为 `houdunyun-talkHero` 后，正式发布前必须先在官网软件目录、授权服务和更新 CDN 建立同名记录并放置对应更新清单；任一接口返回 404 时不得发布或误报更新可用。
 
 TalkHero 的安装包只通过 `extraResources/talkhero-worker` 携带 Python Worker 协议脚本，不携带 Python 运行时、FFmpeg、模型权重、浏览器资料或用户媒体。完整本地推理版本发布前还必须在 Windows 11 x64 + NVIDIA 上核对：受管 Python 3.11 与所有资源清单哈希、许可证 notices、Worker 启动/取消/退出、4GB/6GB 显存行为、仅嘴部差分和安装包无个人数据。资源信任清单为空或任一真实验收缺失时必须停止 TalkHero 正式发布，不得把 macOS 壳层构建成功当作模型通过。
 

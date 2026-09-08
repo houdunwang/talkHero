@@ -28,7 +28,7 @@ const failed = (status: number): AuthRequestResult => ({ ok: false, status, data
 
 function createHarness(
   initial: Record<string, unknown> = {},
-  packageName = 'houdunyun-ruyi'
+  packageName = 'houdunyun-talkHero'
 ): {
   flow: AuthFlow
   values: Map<string, unknown>
@@ -106,7 +106,7 @@ describe('AuthFlow login and access', () => {
     expect(harness.values.get('auth')).toEqual(auth)
     expect(login).not.toHaveProperty('data.snapshot.auth.token')
     expect(harness.requests.at(-1)).toEqual({
-      url: '/soft/softs/by-name/houdunyun-ruyi',
+      url: '/soft/softs/by-name/houdunyun-talkHero',
       method: 'GET',
       authToken: 'test-token'
     })
@@ -142,7 +142,7 @@ describe('AuthFlow login and access', () => {
     harness.responses.push(new Promise((resolve) => (resolveSoft = resolve)))
     const pending = harness.flow.checkLogin(10)
     await vi.waitFor(() =>
-      expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-ruyi')
+      expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-talkHero')
     )
     harness.flow.cancelLogin(10)
     resolveSoft(ok({ data: soft }))
@@ -188,7 +188,7 @@ describe('AuthFlow login and access', () => {
 
     expect(await harness.flow.getWebsiteAccessStatus(true)).toBe('active')
     expect(harness.values.get('soft')).toEqual(soft)
-    expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-ruyi')
+    expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-talkHero')
   })
 })
 
@@ -511,7 +511,7 @@ describe('AuthFlow payment', () => {
     await harness.flow.createPayment(20, 'month')
     const oldSync = harness.flow.checkPayment(20)
     await vi.waitFor(() =>
-      expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-ruyi')
+      expect(harness.requests.at(-1)?.url).toBe('/soft/softs/by-name/houdunyun-talkHero')
     )
 
     harness.responses.push(ok(null))
@@ -531,7 +531,7 @@ describe('AuthFlow payment', () => {
     const newSync = harness.flow.checkPayment(21)
     await vi.waitFor(() =>
       expect(
-        harness.requests.filter(({ url }) => url === '/soft/softs/by-name/houdunyun-ruyi')
+        harness.requests.filter(({ url }) => url === '/soft/softs/by-name/houdunyun-talkHero')
       ).toHaveLength(4)
     )
 
@@ -539,7 +539,7 @@ describe('AuthFlow payment', () => {
     await oldSync
     const repeatedSync = harness.flow.syncPayment(21)
     expect(
-      harness.requests.filter(({ url }) => url === '/soft/softs/by-name/houdunyun-ruyi')
+      harness.requests.filter(({ url }) => url === '/soft/softs/by-name/houdunyun-talkHero')
     ).toHaveLength(4)
 
     resolveNewSync(ok({ data: soft }))

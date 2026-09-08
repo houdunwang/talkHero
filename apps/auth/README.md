@@ -8,14 +8,14 @@
 
 ## 关键入口
 
-| 路径 | 职责 |
-|---|---|
-| `main/index.ts` | 加载认证 IPC |
-| `main/flow.ts`、`main/service.ts` | 认证/支付状态机及官网请求适配 |
-| `main/contracts.ts`、`main/ipc.ts` | 参数、窗口权限与公共 IPC 边界 |
-| `main/store.ts` | `auth` 持久化状态 |
-| `preload/index.ts` | 暴露 `window.auth` 最小 bridge |
-| `renderer/routes/` | 登录、支付与订阅页面 |
+| 路径                               | 职责                           |
+| ---------------------------------- | ------------------------------ |
+| `main/index.ts`                    | 加载认证 IPC                   |
+| `main/flow.ts`、`main/service.ts`  | 认证/支付状态机及官网请求适配  |
+| `main/contracts.ts`、`main/ipc.ts` | 参数、窗口权限与公共 IPC 边界  |
+| `main/store.ts`                    | `auth` 持久化状态              |
+| `preload/index.ts`                 | 暴露 `window.auth` 最小 bridge |
+| `renderer/routes/`                 | 登录、支付与订阅页面           |
 
 ## 运行与公共接口
 
@@ -27,7 +27,7 @@
 
 `CreateStore('auth')` 保存认证相关状态；修改结构必须验证旧数据兼容。官网响应、订阅周期和 renderer 参数均不可信，主进程负责校验、错误分类与客户端销毁清理。软件微信支付下单与查单分别使用官网 `/api/soft/pays/softWepay` 和 `/api/soft/pays/softWepayCheck`；请求仍由主进程通过统一 request 基础设施发送。真实登录、支付和生产账号属于高风险操作，测试不得使用真实凭据或真实支付。
 
-软件详情通过 request 基础设施请求 `/soft/softs/by-name/{packageName}`，与已包含 `/api` 的 base URL 组合为 `/api/soft/softs/by-name/{packageName}`；`packageName` 必须作为单一路径段编码。该请求不回退旧 `/core/softs` 命名空间，响应继续按 `{ data: Soft }` 校验。
+软件详情通过 request 基础设施请求 `/soft/softs/by-name/{packageName}`，与已包含 `/api` 的 base URL 组合为 `/api/soft/softs/by-name/{packageName}`；`packageName` 取自 `package.json.englishName` 并必须作为单一路径段编码。该请求不回退旧 `/core/softs` 命名空间，响应继续按 `{ data: Soft }` 校验。
 
 ## 测试与维护
 

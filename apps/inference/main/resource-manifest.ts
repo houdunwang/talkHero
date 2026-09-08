@@ -9,22 +9,26 @@ type Verification = { ok: true; version: string } | { ok: false; reason: string 
 export type ResourceTrust = {
   version: string
   source: string
+  licenseName: string
+  licenseUrl: string
   files: Readonly<Record<string, string>>
 }
 
-const digestFile = (path: string): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const digest = createHash('sha256')
-    const stream = createReadStream(path)
-    stream.on('data', (chunk) => digest.update(chunk))
-    stream.on('error', reject)
-    stream.on('end', () => resolve(digest.digest('hex')))
-  })
+const digestFile = async (path: string, signal?: AbortSignal): Promise<string> => {
+  const digest = createHash('sha256')
+  for await (const chunk of createReadStream(path)) {
+    signal?.throwIfAborted()
+    digest.update(chunk as Buffer)
+  }
+  signal?.throwIfAborted()
+  return digest.digest('hex')
+}
 
 export const verifyResourceManifest = async (
   resourceRoot: string,
   expectedResource: ManagedResourceName,
-  trust: ResourceTrust | undefined
+  trust: ResourceTrust | undefined,
+  signal?: AbortSignal
 ): Promise<Verification> => {
   if (!trust) return { ok: false, reason: '资源尚无内置信任锚' }
   try {
@@ -37,6 +41,11 @@ export const verifyResourceManifest = async (
       manifest.version !== trust.version ||
       manifest.source !== trust.source ||
       new URL(trust.source).protocol !== 'https:' ||
+      typeof manifest.license !== 'object' ||
+      manifest.license === null ||
+      (manifest.license as Record<string, unknown>).name !== trust.licenseName ||
+      (manifest.license as Record<string, unknown>).url !== trust.licenseUrl ||
+      new URL(trust.licenseUrl).protocol !== 'https:' ||
       !Array.isArray(manifest.files) ||
       manifest.files.length === 0
     ) {
@@ -56,7 +65,7 @@ export const verifyResourceManifest = async (
       const realRoot = await realpath(resourceRoot)
       const realFile = await realpath(resolveManagedPath(resourceRoot, file.path))
       resolveManagedPath(realRoot, relative(realRoot, realFile))
-      const actual = await digestFile(realFile)
+      const actual = await digestFile(realFile, signal)
       if (actual !== file.sha256) return { ok: false, reason: '资源哈希不匹配' }
     }
     if (Object.keys(trust.files).length !== manifest.files.length) {

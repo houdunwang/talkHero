@@ -1,8 +1,9 @@
 {
-  "name": "houdunyun-ruyi",
-  "title": "后盾云桌面助手",
-  "version": "2.1.36",
-  "description": "后盾云桌面助手",
+  "name": "houdunyun-talkhero",
+  "englishName": "houdunyun-talkHero",
+  "title": "后盾云短视频助手",
+  "version": "1.0.1",
+  "description": "后盾云短视频助手",
   "main": "./out/main/index.js",
   "author": "后盾云",
   "homepage": "https://www.houdunyun.com",

@@ -1,6 +1,6 @@
 import type { TalkHeroResult } from '@apps/inference/types/public'
 import { fileGrants } from '@apps/inference/main/file-grants'
-import { authorizeTalkHeroClient } from '@apps/inference/main/ipc-security'
+import { authorizeProductClient } from '@apps/inference/main/ipc-security'
 import { dialog, ipcMain } from 'electron'
 import { VIDEO_IPC } from '../types/ipc'
 import type { SelectedVideoSource, VideoInspection, VideoWorkspaceSnapshot } from '../types/public'
@@ -8,14 +8,14 @@ import { getVideoWorkspaceSnapshot, inspectVideo } from './service'
 import { parseInspectVideoRequest } from './contracts'
 
 const clientId = (event: Electron.IpcMainInvokeEvent): number | null => {
-  return authorizeTalkHeroClient(event)
+  return authorizeProductClient(event)
 }
 
 ipcMain.removeHandler(VIDEO_IPC.workspace)
 ipcMain.handle(
   VIDEO_IPC.workspace,
   (event, ...args: unknown[]): TalkHeroResult<VideoWorkspaceSnapshot> => {
-    if (authorizeTalkHeroClient(event) === null)
+    if (authorizeProductClient(event) === null)
       return { ok: false, code: 'forbidden', message: '当前窗口无权访问视频工作台' }
     if (args.length !== 0) return { ok: false, code: 'invalid-input', message: '请求参数无效' }
     return { ok: true, data: getVideoWorkspaceSnapshot() }

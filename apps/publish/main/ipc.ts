@@ -1,15 +1,23 @@
 import type { TalkHeroResult } from '@apps/inference/types/public'
 import { fileGrants } from '@apps/inference/main/file-grants'
-import { authorizeTalkHeroClient } from '@apps/inference/main/ipc-security'
+import { authorizeProductClient } from '@apps/inference/main/ipc-security'
 import { dialog, ipcMain } from 'electron'
 import { PUBLISH_IPC } from '../types/ipc'
-import type { PublishCapabilitySnapshot, PublishDraft, SelectedPublishVideo } from '../types/public'
+import type {
+  GeneratedVideoSummary,
+  PublishCapabilitySnapshot,
+  PublishDraft,
+  SelectedPublishVideo
+} from '../types/public'
 import {
   confirmPublishDraft,
   findGeneratedVideoTaskId,
   getPublishCapabilitySnapshot,
+  listGeneratedVideos,
   listPublishDrafts,
   preparePublishDraft,
+  removeInvalidGeneratedVideo,
+  selectGeneratedVideo,
   updatePublishDraft
 } from './service'
 import {
@@ -19,7 +27,7 @@ import {
 } from './contracts'
 
 const clientId = (event: Electron.IpcMainInvokeEvent): number | null => {
-  return authorizeTalkHeroClient(event)
+  return authorizeProductClient(event)
 }
 
 const safeMessage = (error: unknown, fallback: string): string => {
@@ -31,7 +39,7 @@ ipcMain.removeHandler(PUBLISH_IPC.capability)
 ipcMain.handle(
   PUBLISH_IPC.capability,
   (event, ...args: unknown[]): TalkHeroResult<PublishCapabilitySnapshot> => {
-    if (authorizeTalkHeroClient(event) === null)
+    if (authorizeProductClient(event) === null)
       return { ok: false, code: 'forbidden', message: '当前窗口无权访问发布能力' }
     if (args.length !== 0) return { ok: false, code: 'invalid-input', message: '请求参数无效' }
     return { ok: true, data: getPublishCapabilitySnapshot() }
@@ -121,8 +129,52 @@ ipcMain.handle(
         grantId: grant.id,
         taskId,
         displayName: grant.displayName,
-        expiresAt: grant.expiresAt
+        expiresAt: grant.expiresAt,
+        previewUrl: `talkhero-media://video/${taskId}/output.mp4`
       }
+    }
+  }
+)
+
+ipcMain.removeHandler(PUBLISH_IPC.listGeneratedVideos)
+ipcMain.handle(
+  PUBLISH_IPC.listGeneratedVideos,
+  async (event, ...args: unknown[]): Promise<TalkHeroResult<GeneratedVideoSummary[]>> => {
+    if (clientId(event) === null)
+      return { ok: false, code: 'forbidden', message: '当前窗口无权读取生成视频' }
+    if (args.length) return { ok: false, code: 'invalid-input', message: '请求参数无效' }
+    return { ok: true, data: await listGeneratedVideos() }
+  }
+)
+
+ipcMain.removeHandler(PUBLISH_IPC.selectGeneratedVideo)
+ipcMain.handle(
+  PUBLISH_IPC.selectGeneratedVideo,
+  async (event, ...args: unknown[]): Promise<TalkHeroResult<SelectedPublishVideo>> => {
+    const owner = clientId(event)
+    if (owner === null) return { ok: false, code: 'forbidden', message: '当前窗口无权选择生成视频' }
+    if (args.length !== 1 || typeof args[0] !== 'string' || !/^[0-9a-f-]{36}$/iu.test(args[0]))
+      return { ok: false, code: 'invalid-input', message: '生成任务 ID 无效' }
+    try {
+      return { ok: true, data: await selectGeneratedVideo(owner, args[0]) }
+    } catch (error) {
+      return { ok: false, code: 'unavailable', message: safeMessage(error, '生成视频不可用') }
+    }
+  }
+)
+
+ipcMain.removeHandler(PUBLISH_IPC.removeInvalidGeneratedVideo)
+ipcMain.handle(
+  PUBLISH_IPC.removeInvalidGeneratedVideo,
+  async (event, ...args: unknown[]): Promise<TalkHeroResult<boolean>> => {
+    if (clientId(event) === null)
+      return { ok: false, code: 'forbidden', message: '当前窗口无权移除生成视频记录' }
+    if (args.length !== 1 || typeof args[0] !== 'string' || !/^[0-9a-f-]{36}$/iu.test(args[0]))
+      return { ok: false, code: 'invalid-input', message: '生成任务 ID 无效' }
+    try {
+      return { ok: true, data: await removeInvalidGeneratedVideo(args[0]) }
+    } catch (error) {
+      return { ok: false, code: 'unavailable', message: safeMessage(error, '移除失效记录失败') }
     }
   }
 )
