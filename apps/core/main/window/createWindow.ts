@@ -2,6 +2,7 @@ import { WindowBaseConfig } from '@apps/core/types/window'
 import { is } from '@electron-toolkit/utils'
 import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import icon from '../../../../build/icon.png?asset'
 import { windowsList } from './'
 import { openSafeExternalUrl } from '../externalUrl'
@@ -53,6 +54,22 @@ export function createBrowserWindow(options: WindowBaseConfig): BrowserWindow {
     return { action: 'deny' }
   })
 
+  const productionEntry = join(__dirname, '../renderer/index.html')
+  const developmentEntry = is.dev ? process.env['ELECTRON_RENDERER_URL'] : undefined
+  const trustedEntry = developmentEntry ? new URL(developmentEntry) : pathToFileURL(productionEntry)
+  win.webContents.on('will-navigate', (event, destination) => {
+    try {
+      const target = new URL(destination)
+      const trusted = developmentEntry
+        ? target.origin === trustedEntry.origin && target.pathname === trustedEntry.pathname
+        : target.protocol === 'file:' && fileURLToPath(target) === productionEntry
+      if (trusted) return
+    } catch {
+      // Invalid navigation is denied below.
+    }
+    event.preventDefault()
+  })
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -60,7 +77,7 @@ export function createBrowserWindow(options: WindowBaseConfig): BrowserWindow {
     rendererUrl.hash = normalizeRoute(route)
     win.loadURL(rendererUrl.toString())
   } else {
-    win.loadFile(join(__dirname, '../renderer/index.html'), {
+    win.loadFile(productionEntry, {
       hash: normalizeRoute(route)
     })
   }

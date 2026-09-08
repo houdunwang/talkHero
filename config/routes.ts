@@ -6,5 +6,6 @@ export const createRoutes = (): VirtualRootRoute =>
   rootRoute('__root.tsx', [
     physical('/core', '../../../apps/core/renderer/routes'),
     physical('/auth', '../../../apps/auth/renderer/routes'),
+    physical('/video', '../../../apps/video/renderer/routes'),
     physical('/', '.')
   ])

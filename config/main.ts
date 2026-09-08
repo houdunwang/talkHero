@@ -2,5 +2,9 @@
 
 export const mainModuleLoaders = [
   () => import('@apps/core/main'),
-  () => import('@apps/auth/main')
+  () => import('@apps/auth/main'),
+  () => import('@apps/inference/main').then((module) => module.initializeInference()),
+  () => import('@apps/voice/main'),
+  () => import('@apps/video/main'),
+  () => import('@apps/publish/main')
 ] as const

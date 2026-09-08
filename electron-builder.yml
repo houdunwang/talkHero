@@ -12,6 +12,8 @@ extraResources:
     to: macTrayTemplate.png
   - from: build/macTrayTemplate@2x.png
     to: macTrayTemplate@2x.png
+  - from: apps/inference/worker
+    to: talkhero-worker
 asar: true
 asarUnpack:
   - resources/**

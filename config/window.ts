@@ -6,6 +6,25 @@ const isDev = !app.isPackaged
 
 export default [
   {
+    name: 'talkHero',
+    width: 1280,
+    height: 820,
+    minWidth: 1080,
+    minHeight: 720,
+    title: 'TalkHero',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: { color: '#00000000', symbolColor: '#e4e4e7', height: 40 },
+    route: '/video/workbench',
+    resizable: true,
+    hasShadow: true,
+    hideDockIcon: false,
+    createOnStartup: true,
+    show: true,
+    beforeShow: (win) => {
+      if (isDev) toScreenPosition(win, 0, 'center')
+    }
+  },
+  {
     name: 'setting',
     width: 1140,
     height: 760,

@@ -1,3 +1,3 @@
 export const dockConfig = {
-  windowName: 'setting'
+  windowName: 'talkHero'
 }

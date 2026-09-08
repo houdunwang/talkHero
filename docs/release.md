@@ -28,6 +28,8 @@
 
 electron-builder 的版本化文件和更新清单必须保持一致。`dist/` 中的官网下载别名为 macOS `houdunyun-ruyi-mac-arm64.dmg` 与 Windows `houdunyun-ruyi.exe`；固定别名不属于自动更新清单，不得替换、重命名或删除版本化发布物。macOS ZIP 不生成固定别名。
 
+TalkHero 的安装包只通过 `extraResources/talkhero-worker` 携带 Python Worker 协议脚本，不携带 Python 运行时、FFmpeg、模型权重、浏览器资料或用户媒体。完整本地推理版本发布前还必须在 Windows 11 x64 + NVIDIA 上核对：受管 Python 3.11 与所有资源清单哈希、许可证 notices、Worker 启动/取消/退出、4GB/6GB 显存行为、仅嘴部差分和安装包无个人数据。资源信任清单为空或任一真实验收缺失时必须停止 TalkHero 正式发布，不得把 macOS 壳层构建成功当作模型通过。
+
 ## 停止发布与恢复
 
 应用无法启动、核心流程不可用、认证/支付/权限大面积异常、数据损坏、严重安全或隐私问题、签名/公证失败、安装或更新失败时立即停止发布。保留证据且不要覆盖现有发布物。
