@@ -18,7 +18,7 @@ import { verifyResourceManifest, type ResourceTrust } from './resource-manifest'
 
 export const RESOURCE_PATHS: Readonly<Record<ManagedResourceName, string>> = {
   python: 'runtime/python',
-  'index-tts': 'models/index-tts-2.5',
+  cosyvoice2: 'models/cosyvoice2-0.5b',
   'muse-talk': 'models/muse-talk-1.5',
   asr: 'models/faster-whisper-small',
   ffmpeg: 'runtime/ffmpeg',
@@ -31,6 +31,8 @@ export type ResourcePackage = {
   source: string
   licenseName: string
   licenseUrl: string
+  commercialUse: boolean
+  redistribution: boolean
   files: Array<{
     path: string
     url: string
@@ -70,9 +72,15 @@ const validatePackage = (resource: ResourcePackage): void => {
     new URL(resource.source).protocol !== 'https:' ||
     !resource.licenseName.trim() ||
     new URL(resource.licenseUrl).protocol !== 'https:' ||
+    resource.commercialUse !== true ||
+    resource.redistribution !== true ||
     resource.files.length === 0
   )
-    throw new Error('受管资源清单无效')
+    throw new Error(
+      resource.commercialUse !== true || resource.redistribution !== true
+        ? '许可证不允许商业交付'
+        : '受管资源清单无效'
+    )
   const paths = new Set<string>()
   for (const file of resource.files) {
     if (
@@ -93,6 +101,8 @@ const resourceTrust = (resource: ResourcePackage): ResourceTrust => ({
   source: resource.source,
   licenseName: resource.licenseName,
   licenseUrl: resource.licenseUrl,
+  commercialUse: resource.commercialUse,
+  redistribution: resource.redistribution,
   files: Object.fromEntries(resource.files.map((file) => [file.path, file.sha256]))
 })
 
@@ -231,7 +241,12 @@ export const installResourcePackage = async (
         resource: resource.name,
         version: resource.version,
         source: resource.source,
-        license: { name: resource.licenseName, url: resource.licenseUrl },
+        license: {
+          name: resource.licenseName,
+          url: resource.licenseUrl,
+          commercialUse: resource.commercialUse,
+          redistribution: resource.redistribution
+        },
         files: resource.files.map(({ path, sha256 }) => ({ path, sha256 }))
       }),
       { encoding: 'utf8', flag: 'wx' }

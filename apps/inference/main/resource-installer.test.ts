@@ -12,6 +12,41 @@ afterEach(async () => {
 })
 
 describe('managed resource installer', () => {
+  it('rejects resources whose existing license does not directly permit commercial redistribution', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'talkhero-install-'))
+    roots.push(root)
+    let downloaded = false
+
+    await expect(
+      installResourcePackage(
+        root,
+        {
+          name: 'asr',
+          version: 'test',
+          source: 'https://example.com/asr',
+          licenseName: 'CC-BY-NC-4.0',
+          licenseUrl: 'https://example.com/license',
+          commercialUse: false,
+          redistribution: true,
+          files: [
+            {
+              path: 'model.bin',
+              url: 'https://example.com/model.bin',
+              sha256: '0'.repeat(64),
+              sizeBytes: 1
+            }
+          ]
+        },
+        async () => {
+          downloaded = true
+        },
+        () => undefined
+      )
+    ).rejects.toThrow('许可证不允许商业交付')
+
+    expect(downloaded).toBe(false)
+  })
+
   it('downloads a fixed package, verifies hashes and commits it atomically', async () => {
     const root = await mkdtemp(join(tmpdir(), 'talkhero-install-'))
     roots.push(root)
@@ -27,6 +62,8 @@ describe('managed resource installer', () => {
         source: 'https://www.python.org/downloads/release/python-3119/',
         licenseName: 'PSF-2.0',
         licenseUrl: 'https://docs.python.org/3/license.html',
+        commercialUse: true,
+        redistribution: true,
         files: [
           {
             path: 'python.exe',
@@ -68,6 +105,8 @@ describe('managed resource installer', () => {
         source: 'https://example.com/asr',
         licenseName: 'MIT',
         licenseUrl: 'https://example.com/license',
+        commercialUse: true,
+        redistribution: true,
         files: [
           {
             path: 'model.bin',
@@ -102,6 +141,8 @@ describe('managed resource installer', () => {
           source: 'https://ffmpeg.org/',
           licenseName: 'LGPL-2.1-or-later',
           licenseUrl: 'https://ffmpeg.org/legal.html',
+          commercialUse: true,
+          redistribution: true,
           files: [
             {
               path: 'ffmpeg.exe',
@@ -133,6 +174,8 @@ describe('managed resource installer', () => {
           source: 'https://example.com/browser',
           licenseName: 'Test',
           licenseUrl: 'https://example.com/license',
+          commercialUse: true,
+          redistribution: true,
           files: [
             {
               path: 'browser.exe',
@@ -167,6 +210,8 @@ describe('managed resource installer', () => {
           source: 'https://example.com/python',
           licenseName: 'Test',
           licenseUrl: 'https://example.com/license',
+          commercialUse: true,
+          redistribution: true,
           files: [
             {
               path: 'python.exe',
@@ -205,6 +250,8 @@ describe('managed resource installer', () => {
             source: 'https://example.com/python',
             licenseName: 'Test',
             licenseUrl: 'https://example.com/license',
+            commercialUse: true,
+            redistribution: true,
             files: [
               {
                 path: 'python.exe',
@@ -242,6 +289,8 @@ describe('managed resource installer', () => {
             source: 'https://example.com/python',
             licenseName: 'Test',
             licenseUrl: 'https://example.com/license',
+            commercialUse: true,
+            redistribution: true,
             files: [
               {
                 path: 'python.exe',
@@ -271,6 +320,8 @@ describe('managed resource installer', () => {
       source: 'https://example.com/python',
       licenseName: 'Test',
       licenseUrl: 'https://example.com/license',
+      commercialUse: true,
+      redistribution: true,
       files: [
         {
           path: 'python.exe',
@@ -290,7 +341,12 @@ describe('managed resource installer', () => {
         resource: 'python',
         version: 'test',
         source: resource.source,
-        license: { name: resource.licenseName, url: resource.licenseUrl },
+        license: {
+          name: resource.licenseName,
+          url: resource.licenseUrl,
+          commercialUse: true,
+          redistribution: true
+        },
         files: [{ path: 'python.exe', sha256 }]
       })
     )

@@ -11,6 +11,8 @@ export type ResourceTrust = {
   source: string
   licenseName: string
   licenseUrl: string
+  commercialUse: boolean
+  redistribution: boolean
   files: Readonly<Record<string, string>>
 }
 
@@ -45,6 +47,10 @@ export const verifyResourceManifest = async (
       manifest.license === null ||
       (manifest.license as Record<string, unknown>).name !== trust.licenseName ||
       (manifest.license as Record<string, unknown>).url !== trust.licenseUrl ||
+      (manifest.license as Record<string, unknown>).commercialUse !== trust.commercialUse ||
+      (manifest.license as Record<string, unknown>).redistribution !== trust.redistribution ||
+      trust.commercialUse !== true ||
+      trust.redistribution !== true ||
       new URL(trust.licenseUrl).protocol !== 'https:' ||
       !Array.isArray(manifest.files) ||
       manifest.files.length === 0

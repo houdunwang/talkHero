@@ -27,7 +27,7 @@ const isProfile = (value: unknown): value is VoiceProfileSummary => {
     typeof profile.createdAt === 'string' &&
     typeof profile.updatedAt === 'string' &&
     typeof profile.revisionId === 'string' &&
-    profile.modelVersion === 'index-tts-2.5'
+    profile.modelVersion === 'cosyvoice2-0.5b'
   )
 }
 

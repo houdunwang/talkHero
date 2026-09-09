@@ -61,6 +61,17 @@ describe('voice contracts', () => {
     expect(() =>
       parseSynthesizeVoiceRequest({ profileId: 'p', text: 'x', speed: 1, emotion: 'angry' })
     ).toThrow('参数无效')
+    expect(() =>
+      parseSynthesizeVoiceRequest({
+        profileId: 'p',
+        text: 'x',
+        speed: 1,
+        emotion: 'enthusiastic'
+      })
+    ).toThrow('参数无效')
+    expect(
+      parseSynthesizeVoiceRequest({ profileId: 'p', text: 'x', speed: 1, emotion: 'natural' })
+    ).toMatchObject({ emotion: 'natural' })
   })
 
   it('strictly parses rename and update requests without renderer paths', () => {

@@ -70,7 +70,7 @@ export const parseCreateVoiceRequest = (value: unknown): CreateVoiceRequest => {
 }
 
 export const parseSynthesizeVoiceRequest = (value: unknown): SynthesizeVoiceRequest => {
-  const emotions = ['natural', 'enthusiastic', 'steady', 'explain'] as const
+  const emotions = ['natural'] as const
   if (
     !exactRecord(value, ['profileId', 'text', 'speed', 'emotion']) ||
     typeof value.profileId !== 'string' ||

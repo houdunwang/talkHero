@@ -4,7 +4,7 @@ export type VoiceProfileSummary = {
   createdAt: string
   updatedAt: string
   revisionId: string
-  modelVersion: 'index-tts-2.5'
+  modelVersion: 'cosyvoice2-0.5b'
 }
 export type VoiceLibrarySnapshot = {
   profiles: VoiceProfileSummary[]
@@ -25,7 +25,7 @@ export type SynthesizeVoiceRequest = {
   profileId: string
   text: string
   speed: number
-  emotion: 'natural' | 'enthusiastic' | 'steady' | 'explain'
+  emotion: 'natural'
 }
 export type GeneratedAudio = { taskId: string; previewUrl: string }
 export type VoicePreview = { profileId: string; previewUrl: string }

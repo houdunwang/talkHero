@@ -13,7 +13,7 @@ export const Route = createFileRoute('/inference/config')({ component: RouteComp
 
 const RESOURCE_NAMES: Record<ManagedResourceName, string> = {
   python: 'Python 3.11',
-  'index-tts': 'IndexTTS 2.5',
+  cosyvoice2: 'CosyVoice2 0.5B',
   'muse-talk': 'MuseTalk 1.5',
   asr: '语音识别',
   ffmpeg: 'FFmpeg',

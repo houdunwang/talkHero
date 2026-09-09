@@ -8,7 +8,7 @@ import { resolveManagedPath } from './contracts'
 
 const RESOURCE_PATHS: Readonly<Record<ManagedResourceName, string>> = {
   python: 'runtime/python',
-  'index-tts': 'models/index-tts-2.5',
+  cosyvoice2: 'models/cosyvoice2-0.5b',
   'muse-talk': 'models/muse-talk-1.5',
   asr: 'models/faster-whisper-small',
   ffmpeg: 'runtime/ffmpeg',
@@ -24,6 +24,8 @@ const TRUSTED_RESOURCES: Partial<Record<ManagedResourceName, ResourceTrust>> = O
       source: resource.source,
       licenseName: resource.licenseName,
       licenseUrl: resource.licenseUrl,
+      commercialUse: resource.commercialUse,
+      redistribution: resource.redistribution,
       files: Object.fromEntries(resource.files.map((file) => [file.path, file.sha256]))
     }
   ])

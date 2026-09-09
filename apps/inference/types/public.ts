@@ -8,7 +8,7 @@ export type TalkHeroFailure = {
 export type TalkHeroResult<T> = { ok: true; data: T } | TalkHeroFailure
 
 export type ManagedResourceName =
-  'python' | 'index-tts' | 'muse-talk' | 'asr' | 'ffmpeg' | 'browser'
+  'python' | 'cosyvoice2' | 'muse-talk' | 'asr' | 'ffmpeg' | 'browser'
 export type ManagedResourceStatus = {
   name: ManagedResourceName
   installed: boolean

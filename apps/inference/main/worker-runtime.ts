@@ -29,7 +29,7 @@ const requiredResources = (operation: WorkerOperation): readonly ManagedResource
     case 'voice.create':
       return ['python', 'asr', 'ffmpeg']
     case 'voice.synthesize':
-      return ['python', 'index-tts', 'asr']
+      return ['python', 'cosyvoice2', 'asr']
     case 'video.inspect':
       return ['python', 'ffmpeg']
     case 'video.lipsync':
@@ -59,7 +59,7 @@ const createClient = (): WorkerClient => {
       PYTHONUTF8: '1',
       HF_HUB_OFFLINE: '1',
       TRANSFORMERS_OFFLINE: '1',
-      HF_HOME: join(root, 'models', 'index-tts-2.5', 'checkpoints', 'hf_cache'),
+      HF_HOME: join(root, 'models', 'cosyvoice2-0.5b', 'hf-cache'),
       TALKHERO_FFMPEG: join(ffmpegRoot, 'ffmpeg.exe'),
       TALKHERO_FFPROBE: join(ffmpegRoot, 'ffprobe.exe'),
       TALKHERO_MANAGED_ROOT: root

@@ -65,7 +65,7 @@ class VoiceProfileStore {
       createdAt: now,
       updatedAt: now,
       revisionId: randomUUID(),
-      modelVersion: 'index-tts-2.5'
+      modelVersion: 'cosyvoice2-0.5b'
     }
     let profileCommitted = false
     try {
@@ -237,7 +237,7 @@ class VoiceProfileStore {
       typeof profile.createdAt === 'string' &&
       typeof profile.updatedAt === 'string' &&
       PROFILE_ID.test(profile.revisionId ?? '') &&
-      profile.modelVersion === 'index-tts-2.5'
+      profile.modelVersion === 'cosyvoice2-0.5b'
     )
   }
 

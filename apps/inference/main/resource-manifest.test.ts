@@ -25,7 +25,12 @@ describe('verifyResourceManifest', () => {
         resource: 'python',
         version: '3.12.10',
         source: 'https://www.python.org/',
-        license: { name: 'PSF-2.0', url: 'https://docs.python.org/3/license.html' },
+        license: {
+          name: 'PSF-2.0',
+          url: 'https://docs.python.org/3/license.html',
+          commercialUse: true,
+          redistribution: true
+        },
         files: [{ path: 'runtime.bin', sha256 }]
       })
     )
@@ -34,6 +39,8 @@ describe('verifyResourceManifest', () => {
       source: 'https://www.python.org/',
       licenseName: 'PSF-2.0',
       licenseUrl: 'https://docs.python.org/3/license.html',
+      commercialUse: true as const,
+      redistribution: true as const,
       files: { 'runtime.bin': sha256 }
     }
     expect(await verifyResourceManifest(root, 'python', trust)).toEqual({
