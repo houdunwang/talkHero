@@ -17,6 +17,12 @@ description: 仅当用户明确要求直接在 main 开发时，为后盾云桌�
 
 全程禁止创建、切换、合并、rebase 或删除 branch/worktree，也禁止 stash、reset、checkout、clean；默认不 commit、push 或发布。只有 Spec 是人工审核点，Plan 不扩大 Spec 时无需审核。
 
+## 写作方式
+
+- 与用户沟通先说结论，再用日常中文说明原因、风险和下一步；少用术语，必须用时顺手解释。不要把流程规则原样堆给用户。
+- Spec 和 Plan 只写这项需求相关、会影响决定或验证的事实；同一事实只保留一处，能用一行或表格说清就不写长段落。
+- 模板章节按需保留；不适用内容合并写“无/不涉及”，不要为填满模板重复背景、范围或验证信息。编号、范围、验收条件、风险和证据必须完整、可追溯。
+
 ## 路由
 
 - 新功能：读取 [phase-a-main.md](references/phase-a-main.md) 和 [spec-template.md](spec-template.md)。阶段 A 开始时逐文件 Git 状态必须完全为空；只创建 `_specs/<slug>.md`，随后停止且不运行项目命令。
