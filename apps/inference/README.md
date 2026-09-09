@@ -2,9 +2,9 @@
 
 ## 职责与边界
 
-`apps/inference` 是 TalkHero 本地推理基础设施边界，负责有版本的 Worker 消息协议、任务状态、计算档位、受管资源状态和固定系统探测。模型不得进入 Electron main 或 renderer；业务模块不得依赖 IndexTTS、MuseTalk、ASR 或 FFmpeg 的仓库内部布局。
+`apps/inference` 是 TalkHero 本地推理基础设施边界，负责有版本的 Worker 消息协议、任务状态、计算档位、受管资源状态和固定系统探测。模型不得进入 Electron main 或 renderer；业务模块不得依赖 CosyVoice2、MuseTalk、ASR 或 FFmpeg 的仓库内部布局。
 
-当前代码实现协议解析、任务恢复策略、受管路径校验、Windows NVIDIA 探测、受管资源安装器、资源快照、一次性文件授权和单进程 Worker 生命周期。Worker 固定要求受管 Python 3.11，并提供环境健康、参考音频处理、IndexTTS 2.5、媒体质检和本地封面操作；MuseTalk 的安全人物跟踪/嘴部最小融合仍未完成，因此口型能力保持 fail-closed。
+当前代码实现协议解析、任务恢复策略、受管路径校验、Windows NVIDIA 探测、受管资源安装器、资源快照、一次性文件授权和单进程 Worker 生命周期。Worker 固定要求受管 Python 3.11，并提供环境健康、参考音频处理、CosyVoice2 0.5B 自然语音适配、媒体质检和本地封面操作；MuseTalk 的安全人物跟踪/嘴部最小融合仍未完成，因此口型能力保持 fail-closed。CosyVoice2 只调用离线 `inference_zero_shot`，使用音色档案内的参考音频及其转写；受管模型目录必须同时包含固定中英文 WeTextProcessing FST，本地 Apache-2.0 推理适配只经 `kaldifst` 显式加载它们，不安装 WeText 的 ModelScope 下载依赖。运行链不启用 ttsfrd、JIT、TensorRT、vLLM、训练或服务端入口；CUDA 使用 FP16，其他平台当前明确走 CPU 音频路径，任务进度会显示实际后端。
 
 ## 关键入口与公共面
 
@@ -25,9 +25,9 @@
 | `types/public.ts`、`types/ipc.ts`  | 快照与 `talkhero:inference:environment` 公共契约    |
 | `preload/index.ts`                 | 暴露 `window.inference.getEnvironment()`            |
 
-受管资源根固定为 Electron `userData/talkhero`；renderer 不能指定命令、下载域名或存储根。安装器只接受应用内固定的 HTTPS 来源、版本、许可证、文件大小和 SHA-256，拒绝受管根本身或中间目录通过 symlink/junction 解析到其他位置，先写入同卷暂存目录，全部校验成功后再原子替换；校验/提交阶段取消会回滚，退出会取消并等待安装收尾，启动会对账原子切换遗留目录。取消、失败或损坏均不得污染当前可用版本。正式资源清单在安装包、下载来源、完整哈希和许可证尚未完成发布审计前保持为空，界面明确显示不可安装，而不是信任可变上游或手工放置文件。
+受管资源根固定为 Electron `userData/talkhero`；renderer 不能指定命令、下载域名或存储根。安装器只接受应用内固定的 HTTPS 来源、版本、许可证、文件大小和 SHA-256，并要求清单显式确认现有许可证文本允许商业使用与再分发；任一项不是 `true` 时在下载前拒绝。安装器拒绝受管根本身或中间目录通过 symlink/junction 解析到其他位置，先写入同卷暂存目录，全部校验成功后再原子替换；校验/提交阶段取消会回滚，退出会取消并等待安装收尾，启动会对账原子切换遗留目录。取消、失败或损坏均不得污染当前可用版本。正式资源清单在安装包、下载来源、完整哈希和许可证尚未完成发布审计前保持为空，界面明确显示不可安装，而不是信任可变上游或手工放置文件。
 
-任务日志保存 operation、受管相对输出身份和输出 SHA-256，renderer 任务列表会移除内部输出路径。`talkhero-media://` 只接受不可枚举 UUID 与固定文件名，并在 `realpath` 后再次检查受管根及 Windows 跨卷边界；视频预览会转发 Range 请求以支持拖动。macOS 只返回桌面壳限制说明，完整推理首版仅面向 Windows 11 x64 + NVIDIA CUDA。
+任务日志保存 operation、受管相对输出身份和输出 SHA-256，renderer 任务列表会移除内部输出路径。`talkhero-media://` 只接受不可枚举 UUID 与固定文件名，并在 `realpath` 后再次检查受管根及 Windows 跨卷边界；视频预览会转发 Range 请求以支持拖动。macOS 与 Windows Intel 的完整视频推理仍处于候选/未验证状态；CosyVoice2 可在任务中明确显示 CPU 音频路径，但不得由此推断 MuseTalk 视频兼容。Windows NVIDIA 仍是首个完整推理基准环境。
 
 软件不定义独立业务或配置窗口：`/inference/config` 通过 `config/routes.ts` 接入原系统 `setting` 窗口和 `SettingLayout`，展示环境、资源和任务并允许取消可取消任务。全部 inference IPC 只接受受信 `setting` 窗口，旧 `talkHero` 窗口身份不再有效。
 

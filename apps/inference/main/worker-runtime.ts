@@ -60,6 +60,8 @@ const createClient = (): WorkerClient => {
       HF_HUB_OFFLINE: '1',
       TRANSFORMERS_OFFLINE: '1',
       HF_HOME: join(root, 'models', 'cosyvoice2-0.5b', 'hf-cache'),
+      MODELSCOPE_CACHE: join(root, 'models', 'cosyvoice2-0.5b', 'modelscope-cache'),
+      TORCH_FORCE_WEIGHTS_ONLY_LOAD: '1',
       TALKHERO_FFMPEG: join(ffmpegRoot, 'ffmpeg.exe'),
       TALKHERO_FFPROBE: join(ffmpegRoot, 'ffprobe.exe'),
       TALKHERO_MANAGED_ROOT: root

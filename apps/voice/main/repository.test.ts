@@ -28,6 +28,7 @@ describe('VoiceProfileRepository', () => {
       featuresPath: features
     })
 
+    expect(profile.modelVersion).toBe('cosyvoice2-0.5b')
     expect((await repository.list()).map((item) => item.id)).toEqual([profile.id])
     expect(await readFile(join(root, 'voices', profile.id, 'reference.wav'), 'utf8')).toBe('audio')
     expect(await readFile(join(root, 'voices', profile.id, 'transcript.txt'), 'utf8')).toBe(

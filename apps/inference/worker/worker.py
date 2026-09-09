@@ -23,10 +23,15 @@ MANAGED_ROOT = os.environ.get("TALKHERO_MANAGED_ROOT")
 if not MANAGED_ROOT:
     raise RuntimeError("missing managed root")
 ROOT = Path(MANAGED_ROOT).resolve()
+WORKER_ROOT = Path(__file__).resolve().parent
 FFMPEG = Path(os.environ.get("TALKHERO_FFMPEG", ROOT / "runtime/ffmpeg/ffmpeg.exe"))
 FFPROBE = Path(os.environ.get("TALKHERO_FFPROBE", ROOT / "runtime/ffmpeg/ffprobe.exe"))
-INDEX_REPO = Path(os.environ.get("TALKHERO_INDEX_REPO", ROOT / "models/index-tts-2.5/repository"))
-INDEX_MODELS = Path(os.environ.get("TALKHERO_INDEX_MODELS", ROOT / "models/index-tts-2.5/checkpoints"))
+COSYVOICE_REPO = Path(
+    os.environ.get("TALKHERO_COSYVOICE_REPO", ROOT / "models/cosyvoice2-0.5b/repository")
+)
+COSYVOICE_MODEL = Path(
+    os.environ.get("TALKHERO_COSYVOICE_MODEL", ROOT / "models/cosyvoice2-0.5b/model")
+)
 ASR_MODELS = Path(os.environ.get("TALKHERO_ASR_MODELS", ROOT / "models/faster-whisper-small/model"))
 
 write_lock = threading.Lock()
@@ -147,7 +152,7 @@ def operation_voice_create(task_id: str, payload: dict[str, Any], cancel: thread
     transcript_path.write_text(transcript, encoding="utf-8")
     features = {
         "schemaVersion": 1,
-        "model": "index-tts-2.5",
+        "model": "cosyvoice2-0.5b",
         "referenceSha256": hashlib.sha256(reference.read_bytes()).hexdigest(),
         "transcriptSha256": hashlib.sha256(transcript.encode("utf-8")).hexdigest(),
     }
@@ -165,49 +170,66 @@ def load_tts() -> Any:
     global tts_model
     if tts_model is not None:
         return tts_model
-    sys.path.insert(0, str(INDEX_REPO))
+    if not (COSYVOICE_REPO / "cosyvoice/cli/cosyvoice.py").is_file():
+        raise RuntimeError("CosyVoice2 代码资源不完整")
+    if not (COSYVOICE_MODEL / "llm.pt").is_file():
+        raise RuntimeError("CosyVoice2 模型资源不完整")
+    sys.path.insert(0, str(COSYVOICE_REPO / "third_party/Matcha-TTS"))
+    sys.path.insert(0, str(COSYVOICE_REPO))
+    sys.path.insert(0, str(WORKER_ROOT))
     with open(os.devnull, "w", encoding="utf-8") as sink, redirect_stdout(sink):
-        from indextts.infer_v2_5 import IndexTTS2
+        import torch
+        from cosyvoice_adapter import load_local_cosyvoice2
 
-        tts_model = IndexTTS2(
-            cfg_path=str(INDEX_MODELS / "config.yaml"),
-            model_dir=str(INDEX_MODELS),
-            use_bf16=True,
-        )
+        tts_model = load_local_cosyvoice2(COSYVOICE_MODEL, fp16=torch.cuda.is_available())
     return tts_model
 
 
 def operation_voice_synthesize(task_id: str, payload: dict[str, Any], cancel: threading.Event) -> dict[str, str]:
     reference = ensure_input(str(payload.get("referenceAudio", "")))
     output = ensure_managed(str(payload.get("outputAudio", "")))
+    reference_transcript = str(payload.get("referenceTranscript", "")).strip()
     text = str(payload.get("text", "")).strip()
     speed = float(payload.get("speed", 1.0))
     emotion = str(payload.get("emotion", "natural"))
-    emotion_vectors = {
-        "natural": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5],
-        "enthusiastic": [0.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0],
-        "steady": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.7],
-        "explain": [0.15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.55],
-    }
-    if not text or len(text) > 720 or speed < 0.8 or speed > 1.2 or emotion not in emotion_vectors:
+    if (
+        not text
+        or not reference_transcript
+        or len(text) > 720
+        or speed < 0.8
+        or speed > 1.2
+        or emotion != "natural"
+    ):
         raise ValueError("文案或语速无效")
     if cancel.is_set():
         raise InterruptedError("任务已取消")
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.stem}-{task_id}.tmp.wav")
-    progress(task_id, 10, "load-index-tts")
+    import torch
+    import torchaudio
+
+    backend = "cuda" if torch.cuda.is_available() else "cpu"
+    progress(task_id, 10, f"load-cosyvoice2-{backend}")
     model = load_tts()
     progress(task_id, 25, "synthesize")
     try:
         with open(os.devnull, "w", encoding="utf-8") as sink, redirect_stdout(sink):
-            model.infer(
-                spk_audio_prompt=str(reference),
-                text=text,
-                lang="ZH",
-                output_path=str(temporary),
-                emo_vector=emotion_vectors[emotion],
-                duration_factor=1.0 / speed,
-            )
+            chunks = []
+            for result in model.inference_zero_shot(
+                text,
+                reference_transcript,
+                str(reference),
+                speed=speed,
+            ):
+                if cancel.is_set():
+                    raise InterruptedError("任务已取消")
+                speech = result.get("tts_speech")
+                if speech is None:
+                    raise RuntimeError("CosyVoice2 返回无效音频")
+                chunks.append(speech.detach().cpu())
+            if not chunks:
+                raise RuntimeError("CosyVoice2 未生成音频")
+            torchaudio.save(str(temporary), torch.cat(chunks, dim=1), model.sample_rate)
     except Exception:
         temporary.unlink(missing_ok=True)
         raise

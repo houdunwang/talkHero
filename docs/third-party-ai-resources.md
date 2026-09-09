@@ -12,7 +12,7 @@
 | --- | --- | --- | --- | --- |
 | CosyVoice2 0.5B 代码、权重与最小推理链 | 音色与文案语音 | 主代码与官方模型卡为 Apache-2.0；必需 Matcha-TTS 为 MIT；WeTextProcessing 为 Apache-2.0 | 已批准为默认 TTS，尚未完成传递审计与真机验证 | 固定源码/模型 revision、约 4.86GB 逐文件清单、SHA-256、NOTICE 和最小 lock；排除 ttsfrd、vLLM、TensorRT、训练/服务端与未审计可选组件；完成 CUDA、XPU/MPS 或明确 CPU 音频路径的盲听与性能探针 |
 | IndexTTS 2.5 及辅助模型 | 已撤销的音色/TTS 方案 | 主项目为自定义许可；实际必需 MaskGCT semantic codec 所在仓库标注 CC-BY-NC-4.0 | **已淘汰，不进入生产清单** | 仅保留审计记录；不发送商业授权邮件、不等待回复、不再作为 fallback |
-| MuseTalk 1.5 代码与主模型 | 局部口型生成 | 官方 README 声明代码为 MIT，主模型可商用 | 主体许可方向可接受，完整链路未完成 | 固定代码/权重 revision；保留 MIT；继续审计全部辅助权重与运行依赖 |
+| MuseTalk 1.5 代码与主模型 | 局部口型生成 | 代码 MIT；模型卡元数据为 CreativeML OpenRAIL-M，官方 README 明确模型可商用 | 现有文本允许免费商业使用和附条件再分发，完整义务与运行链未完成 | 固定代码/权重 revision；随包提供模型许可证与使用限制；继续审计实际辅助权重与运行依赖 |
 | MuseTalk 辅助模型 | VAE、Whisper、DWPose、SyncNet、face parsing、face alignment、S3FD 等 | VAE 为 MIT、Whisper 与 DWPose 模型卡为 Apache-2.0、LatentSync SyncNet 为 OpenRAIL++；S3FD 和 Google Drive face-parsing 权重缺少可随文件核验的清晰许可链 | 未完成 | 逐项固定原始来源与条款；S3FD/face-parsing 权重未关闭前不得进入商业资源包；OpenRAIL++ 条款须随产品使用场景复核；不得使用官方互联网 testdata 作商业样片 |
 | faster-whisper 与 Whisper 模型 | B 视频转写、音频内容复验、字幕时间锚点 | faster-whisper、CTranslate2、OpenAI Whisper 官方代码均为 MIT | 代码许可方向可接受，发行物未锁定 | 固定代码/模型 revision、NOTICE、大小和 SHA-256；核对转换模型来源；验证离线运行及三平台后端 |
 | PyTorch 与平台运行时 | CUDA、XPU、MPS 推理 | PyTorch 主项目为 BSD 风格许可并包含多方版权声明 | 主体许可方向可接受，发行包未审计 | 三套互斥 lock/SBOM 和发行包第三方 notices；不得在客户机执行 pip；验证 CUDA/XPU/MPS 实际算子和安全权重加载 |
@@ -45,11 +45,12 @@
 ### 默认替代候选：CosyVoice2 0.5B
 
 - 官方 CosyVoice 代码仓库采用 Apache-2.0；官方 `FunAudioLLM/CosyVoice2-0.5B` 模型卡直接标注 Apache-2.0。许可判断以这些现存文本为依据，不依赖 GitHub issue 回复或另行邮件。
-- 官方源码的必需 `third_party/Matcha-TTS` 子模块采用 MIT；默认文本规范化可使用 Apache-2.0 的 WeTextProcessing。Linux 专用且许可/分发边界未闭合的 `ttsfrd` 不是必需项，首版明确排除。
-- 官方模型仓库约 4.86GB，包含 `llm.pt`、`flow.pt`、`hift.pt`、ONNX speech tokenizer/CAMPPlus 等文件。上游核心加载点已显式使用 `weights_only=True`，但仍须固定 revision、逐文件 SHA-256，并验证每个 pickle 容器只含允许的张量类型；能安全转换且结果一致的权重优先转换为 safetensors。
+- 官方源码的必需 `third_party/Matcha-TTS` 子模块采用 MIT；文本规范化使用 Apache-2.0 的 WeTextProcessing 派生最小适配与固定 FST，不安装其会默认下载资源的 PyPI/ModelScope 链。Linux 专用且许可/分发边界未闭合的 `ttsfrd` 不是必需项，首版明确排除。
+- 官方完整模型仓库约 4.86GB；排除批量 tokenizer、TensorRT flow 和演示素材后的当前最小模型文件候选为 4,073,955,371 字节（约 3.794 GiB），包含 `llm.pt`、`flow.pt`、`hift.pt`、单路 ONNX speech tokenizer/CAMPPlus 和 BlankEN。上游核心加载点已显式使用 `weights_only=True`，但仍须验证每个 pickle 容器只含允许的张量类型；能安全转换且结果一致的权重优先转换为 safetensors。
 - 正式包不包含 Gradio/FastAPI、训练、Docker、vLLM、TensorRT/TRT-LLM、deepspeed 或现场编译工具，只提取零样本音色所需的最小离线推理链。客户机不得运行 `pip install`、模型仓库下载器或 Git 子模块命令。
 - 上游当前设备选择只直接覆盖 CUDA/CPU，并包含 CUDA stream/autocast 分支；不能宣称原样支持 XPU/MPS。阶段 0 先适配显式 device abstraction；若 XPU/MPS 仍不成立，可在 UI 清楚标识后采用经盲听证明质量等价的 CPU 音频路径。该保底只增加音频等待，不允许扩展到 MuseTalk 视频。
 - CosyVoice2 是质量优先选择，不因许可证清楚就假定自然度、音色相似度、数字/多音字读法、三分钟长文分段或各平台性能已经合格；必须使用同一组获授权样本做盲听、内容复验和耗时记录。首版默认只开放自然语音，额外语气需单独通过固定版本质量门禁。
+- 已固定的官方模型 revision、代码/submodule commit、WeTextProcessing FST commit 与逐文件 SHA-256 见 [CosyVoice2 资源审计](resource-audits/cosyvoice2-0.5b.md)。Apple Silicon CPU 已完成离线加载和短句技术出波形，但获授权音色盲听、Python wheel/传递依赖及 Windows 后端尚未闭合，因此生产资源目录仍为空。
 
 ### MuseTalk 1.5
 
@@ -73,7 +74,7 @@ MuseTalk 主模型“允许商业使用”不等于整条流水线已经可商�
 
 固定源码显示 `latentsync_syncnet.pt` 只出现在训练/评分路径，不是 MuseTalk 1.5 生成必需资源；因此首版生产生成包不应默认携带它。若后续选它作为质量评分器，须先单独定义评分行为、关闭 OpenRAIL++ 义务并验证三平台，再加入清单。
 
-S3FD 与 BiSeNet 是官方预处理/融合的依赖，但其许可链不清晰，且官方 BiSeNet 蒙版覆盖范围大于本 Spec 的“嘴部最小邻域”。首选探针方案是使用已必需的 DWPose 面部关键点建立保守人脸框、嘴部多边形与跨帧轨迹，在跟踪歧义时保留原帧，不下载 S3FD/BiSeNet。只有同一授权样片证明该方案在走动、转头和遮挡场景仍满足身份与融合门禁，才能正式删除这两项；若探针不达标，则改选许可证文本明确且满足最小蒙版要求的检测/分割实现，找不到时停止 MuseTalk 商业交付，不走额外授权路线。
+S3FD 与 BiSeNet 是官方预处理/融合的依赖，但其许可链不清晰，且官方 BiSeNet 蒙版覆盖范围大于本 Spec 的“嘴部最小邻域”。当前更小的首选探针方案是使用模型目录明确采用 MIT 的 OpenCV YuNet：它同时输出人脸框、双眼、鼻尖和两个嘴角，可建立用户确认的唯一主体轨迹及保守嘴部蒙版；候选交叉、遮挡或几何连续性不足时保留原帧，不做不可靠重识别。该方案同时排除 S3FD、BiSeNet、SFace 和 DWPose/mmpose 运行链，详见 [MuseTalk 1.5 资源审计](resource-audits/musetalk-1.5.md)。只有同一获授权走动样片证明身份、融合和失败门禁成立才可进入生产；否则选择另一项许可证明确的检测/关键点实现，找不到时停止 MuseTalk 商业交付，不走额外授权路线。
 
 ## 三后端可行性状态
 
@@ -81,7 +82,7 @@ S3FD 与 BiSeNet 是官方预处理/融合的依赖，但其许可链不清晰�
 | --- | --- | --- | --- |
 | Windows NVIDIA CUDA | CosyVoice2 与 MuseTalk 上游均主要面向 NVIDIA；MuseTalk 有 V100/3050 Ti 数据 | 已有 Y9000P RTX 4060 8GB 可供后续实测，但本 worktree 尚无该机器日志 | 等待固定资源与授权样片后探针 |
 | Windows Intel Arc B390 XPU | PyTorch 提供 XPU 能力，但两个模型官方均未声明完整兼容；CosyVoice2 可另测 CPU 音频 | 无 388H/358H 32GB 真机、无关键算子结果 | 视频阻断正式支持；TTS 可先验证明确 CPU 路径 |
-| macOS Apple Silicon MPS | PyTorch 提供 MPS 能力，但两个模型官方均未声明完整兼容；CosyVoice2 可另测 CPU 音频 | 当前有 M1 Pro 16GB 开发机；尚无受管 Python 3.11、固定模型和关键算子结果 | 等待固定资源后探针；未通过前保持候选 |
+| macOS Apple Silicon MPS | PyTorch 提供 MPS 能力，但两个模型官方均未声明完整兼容；CosyVoice2 可另测 CPU 音频 | M1 Pro 16GB 已完成 Python 3.11、CosyVoice2 CPU 及 MuseTalk UNet/VAE/Whisper 的 MPS FP16 关键算子；PyTorch 2.14.0 核心链机械外推仍约 28～29 分钟/3 分钟视频 | 完整流水线、画质、温度/内存和获授权样片未通过前保持候选，不宣传固定耗时 |
 
 框架能够识别 XPU/MPS 只证明设备后端存在，不能证明 CosyVoice2、MuseTalk、VAE、音频编码器、人物检测和全部融合算子可用，也不能证明性能和画质达标。
 

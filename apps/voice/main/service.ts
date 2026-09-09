@@ -106,10 +106,18 @@ export const createVoiceProfile = async (
 export const synthesizeVoice = async (input: SynthesizeVoiceRequest): Promise<GeneratedAudio> => {
   const validation = validateScript(input.text, input.speed)
   if (!validation.ok) throw new Error(validation.reason)
-  const { referenceAudio, releaseProfile } = await serializeVoiceMutation(async () => ({
-    referenceAudio: await repository().getArtifactPath(input.profileId, 'reference.wav'),
-    releaseProfile: profileUsage.acquire(input.profileId)
-  }))
+  const { referenceAudio, referenceTranscript, releaseProfile } = await serializeVoiceMutation(
+    async () => ({
+      referenceAudio: await repository().getArtifactPath(input.profileId, 'reference.wav'),
+      referenceTranscript: (
+        await readFile(
+          await repository().getArtifactPath(input.profileId, 'transcript.txt'),
+          'utf8'
+        )
+      ).trim(),
+      releaseProfile: profileUsage.acquire(input.profileId)
+    })
+  )
   const taskId = randomUUID()
   const outputPath = join(root(), 'outputs', 'audio', `${taskId}.wav`)
   try {
@@ -118,6 +126,7 @@ export const synthesizeVoice = async (input: SynthesizeVoiceRequest): Promise<Ge
       'voice.synthesize',
       {
         referenceAudio,
+        referenceTranscript,
         text: input.text.trim(),
         speed: input.speed,
         emotion: input.emotion,
