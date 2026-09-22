@@ -1,3 +1,4 @@
 provider: generic
+useMultipleRangeRequest: false
 url: https://www.houdunyun.com/api/core/upload/cdn/apps/houdunyun-ruyi
 updaterCacheDirName: electron-updater

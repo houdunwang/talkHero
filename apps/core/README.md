@@ -30,7 +30,7 @@ renderer 不得直接访问主进程实现；core preload 只能暴露最小系�
 - 统一窗口创建器只透传业务窗口明确声明的 `webPreferences.backgroundThrottling`，并继续强制公共 preload、上下文隔离和禁用 Node 集成；隐藏的实时媒体宿主可据此申请不降速运行。
 - `main/dock/` 管理 Dock 与任务栏图标状态；macOS 没有可见窗口时，激活应用会打开 `config/dock.ts` 指定的窗口。
 - `main/store/` 提供 `CreateStore`、主进程 IPC 和 preload store bridge；`CreateStore.replaceAll` 用于以已校验完整对象精确替换持久化内容；核心设置 store 名为 `core`，桥接 channel 为 `config`。
-- `main/updater/` 提供官网分发使用的 `electron-updater`。
+- `main/updater/` 提供官网分发使用的 `electron-updater`。开发配置 `dev-app-update.yml` 与打包配置 `electron-builder.yml` 的 generic provider 均禁用多段 Range 请求，使用单段请求进行差分下载；差分失败仍由更新器回退完整下载。
 - `main/request/` 是仅供主进程模块复用的受信网络边界，不向 renderer 注册通用 request IPC；401 默认收口到登录窗口，需要先完成原子业务清理的专用请求可显式关闭该跳转并自行处理。`main/externalUrl.ts`、`main/apps/helper.ts` 分别提供外链和本机应用路径边界。
 
 ## 高风险边界
@@ -42,5 +42,7 @@ renderer 不得直接访问主进程实现；core preload 只能暴露最小系�
 ## 测试与维护
 
 `main/shortcut/helper.test.ts` 覆盖全局快捷键注册 helper，`main/request/index.test.ts` 覆盖 401 默认跳转与专用请求禁用跳转；其他共享 IPC、权限、窗口和更新能力主要依赖相关模块测试及真实桌面验证。目标测试：`pnpm exec vitest run apps/core/main/shortcut/helper.test.ts apps/core/main/request/index.test.ts`。通用策略见 [测试策略](../../docs/testing.md)。
+
+`main/updater/download.test.ts` 通过合成文件、本地 HTTP 服务与真实更新下载器验证两份配置的单段 Range、完整下载回退和摘要校验，使用 `pnpm exec vitest run apps/core/main/updater/download.test.ts` 执行。它不验证平台签名与安装，也不能替代真实更新服务和受支持平台验收。
 
 共享职责、启动顺序、preload 公共面、窗口/store 契约、权限或更新边界变化时更新本文件。
